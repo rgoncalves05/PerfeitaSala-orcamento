@@ -430,10 +430,11 @@ body {
   justify-content: space-between;
 }
 .sidebar-version span { opacity: 0.5; }
-.sidebar-version span:last-child { 
+.sidebar-version span:last-child {
   color: var(--coral);
-  opacity: 0.6;
+  opacity: 0.55;
   cursor: pointer;
+  letter-spacing: 0.3px;
 }
 .sidebar-version span:last-child:hover { opacity: 1; }
 
@@ -931,38 +932,17 @@ body {
           <span>Perfeita Sala</span>
           Orçamentos
         </div>
-        <span class="user-badge" onclick="fazerLogout()" title="Sair">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-          <span id="userBadgeLabel">—</span>
-        </span>
+        <span style="font-size:11px;color:var(--coral);opacity:0.8;font-family:'Poppins',sans-serif;" id="userBadgeLabel">—</span>
       </div>
     </div>
-    <div class="sync-status" onclick="abrirConfig()" title="Configurar integração Google Sheets">
+    <div class="sync-status" title="Status da conexão">
       <div class="sync-dot offline" id="syncDot"></div>
-      <span class="sync-label" id="syncLabel">Local (sem Sheets)</span>
-      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#7a5040" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+      <span class="sync-label" id="syncLabel">Conectando...</span>
     </div>
 
 <!-- Login modal replaced by Firebase -->
 
-<!-- Config Modal (advanced — URL only) -->
-<div class="modal-overlay" id="modalConfig">
-  <div class="modal">
-    <h2>⚙️ Configurações</h2>
-    <div class="modal-field" style="margin-bottom:16px">
-      <label>Seu nome</label>
-      <input type="text" id="cfgUser" placeholder="ex: Aninha, Maria, João...">
-    </div>
-    <div class="modal-field">
-      <label>URL do Google Apps Script</label>
-      <input type="text" id="cfgUrl" placeholder="https://script.google.com/macros/s/...">
-    </div>
-    <div class="modal-btns">
-      <button class="modal-btn secondary" onclick="fecharConfig()">Cancelar</button>
-      <button class="modal-btn primary" onclick="salvarConfig()">Salvar</button>
-    </div>
-  </div>
-</div>
+<!-- Config modal removed — settings managed via Firebase -->
     <div class="sidebar-actions">
       <button class="btn-new" onclick="novoOrcamento()">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -983,7 +963,7 @@ body {
     </div>
     <div class="sidebar-version">
       <span id="versionLabel">v1.0.0</span>
-      <span onclick="abrirConfig()" title="Configurações">⚙️</span>
+      <span onclick="fazerLogout()" title="Sair da conta">Sair →</span>
     </div>
   </aside>
 
@@ -1250,21 +1230,10 @@ function fazerLogout() {
   window._fbSignOut();
 }
 
-// ── Config modal ────────────────────────────────────────────────────────────
-function abrirConfig() {
-  const cfg = getCfg();
-  document.getElementById('cfgUrl').value  = cfg.url;
-  document.getElementById('cfgUser').value = cfg.user;
-  document.getElementById('modalConfig').classList.add('open');
-}
-function fecharConfig() {
-  document.getElementById('modalConfig').classList.remove('open');
-}
-async function salvarConfig() {
-  fecharConfig();
-  setSyncStatus('syncing', 'Reconectando...');
-  await syncFromSheets();
-}
+// ── Config (simplified — no modal needed) ───────────────────────────────────
+function abrirConfig() { /* removed */ }
+function fecharConfig() { /* removed */ }
+async function salvarConfig() { /* removed */ }
 
 // ── Sheets API calls ───────────────────────────────────────────────────────
 async function sheetsRequest(params) {
@@ -2458,10 +2427,7 @@ function initAuth() {
 }
 initAuth();
 
-// Close config modal on overlay click
-document.getElementById('modalConfig').addEventListener('click', function(e) {
-  if (e.target === this) fecharConfig();
-});
+// Config modal removed
 </script>
 
 </body>
