@@ -25,10 +25,11 @@
   const auth = getAuth(app);
 
   // Expose to global scope for use in non-module scripts
-  window._fbAuth    = auth;
-  window._fbSignIn  = (email, password) => signInWithEmailAndPassword(auth, email, password);
-  window._fbSignOut = () => signOut(auth);
-  window._fbOnAuth  = (cb) => onAuthStateChanged(auth, cb);
+  window._fbAuth       = auth;
+  window._fbSignIn     = (email, password) => signInWithEmailAndPassword(auth, email, password);
+  window._fbSignOut    = () => signOut(auth);
+  window._fbOnAuth     = (cb) => onAuthStateChanged(auth, cb);
+  window._fbGetToken   = () => auth.currentUser ? auth.currentUser.getIdToken() : Promise.resolve(null);
 </script>
 <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300&display=swap" rel="stylesheet">
 <style>
@@ -1246,10 +1247,22 @@ async function sheetsRequest(params) {
   const cfg = getCfg();
   if (!cfg.url) return null;
   try {
-    const qs = new URLSearchParams(params).toString();
+    // Get Firebase ID Token — proves user is authenticated
+    const token = window._fbGetToken ? await window._fbGetToken() : null;
+    if (!token) {
+      setSyncStatus('error', 'Não autenticado');
+      return null;
+    }
+    const qs = new URLSearchParams({ ...params, token }).toString();
     const res = await fetch(cfg.url + '?' + qs);
     const json = await res.json();
-    if (json.error) throw new Error(json.error);
+    if (json.error) {
+      if (json.error.includes('401') || json.error.includes('Token')) {
+        setSyncStatus('error', 'Sessão expirada — faça login novamente');
+        window._fbSignOut && window._fbSignOut();
+      }
+      throw new Error(json.error);
+    }
     return json;
   } catch(e) {
     console.error('Sheets error:', e);
