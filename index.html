@@ -1601,6 +1601,10 @@ body {
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
           Salvar
         </button>
+        <button class="btn-save" onclick="duplicarOrcamento()" title="Duplicar orçamento" style="background:transparent;border:1.5px solid #3a1f14;color:#c0906a;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Duplicar
+        </button>
         <button class="btn-pdf" id="btnPdfCliente" onclick="gerarPDF()">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
           PDF CLIENTE
@@ -1685,7 +1689,7 @@ body {
                   <input type="checkbox" id="temDesconto" onchange="toggleDesconto(); calcTotal()" checked>
                   <span class="slider"></span>
                 </label>
-                <label for="temDesconto">Aplicar desconto especial</label>
+                <label for="temDesconto">Aplicar desconto</label>
               </div>
               <div class="field-row cols2" id="locacaoFields">
                 <div class="field">
@@ -2092,7 +2096,8 @@ function detectarSobreposicao(orc, lista) {
   lista.forEach(o => {
     if (o.id === orc.id) return;
     if (!o.dataEvento || !o.horario) return;
-    if ((o.status || 'proposta') === 'apagado') return;
+    const st = o.status || '';
+    if (st === 'apagado' || st === 'cancelado') return;
     const dataO = o.dataEvento.split('T')[0];
     if (dataO !== dataOrc) return;
     const inicioB = horaParaMinutos(o.horario);
@@ -2140,33 +2145,7 @@ function salvarOrcamento(forcar) {
 }
 
 function onClienteChange() {
-  const novoCliente = document.getElementById('cliente').value.trim();
-  // If the client name changed from what was loaded, clone into a new record
-  if (currentId && originalCliente !== null && novoCliente !== originalCliente && novoCliente !== '') {
-    // Debounce: only clone after user stops typing for 1.2s
-    clearTimeout(autoSaveTimer);
-    autoSaveTimer = setTimeout(() => {
-      const orc = coletarDados();
-      const listaAtual = listar();
-      const original = listaAtual.find(o => o.id === currentId);
-      // Check if this looks like a real client change (not just editing same name)
-      if (original && (original.cliente || '') !== novoCliente) {
-        const novoId = 'orc_' + Date.now();
-        const cfg2 = getCfg();
-        const novoOrc = { ...orc, id: novoId, savedAt: new Date().toISOString(), savedBy: cfg2.user || 'anônimo' };
-        const novaLista = [novoOrc, ...listaAtual];
-        salvarLista(novaLista);
-        currentId = novoId;
-        originalCliente = novoCliente;
-        renderSidebar();
-        showToast('Novo orçamento criado para ' + novoCliente + ' ✓');
-      } else {
-        salvarOrcamento();
-      }
-    }, 1200);
-  } else {
-    autoSave();
-  }
+  autoSave();
 }
 
 // ── Horario combobox ──────────────────────────────────────────────────────
@@ -2303,13 +2282,46 @@ function mascaraHorario(el) {
 // Convert stored horario to display format (HH:MM)
 function horarioToDisplay(v) {
   if (!v) return '';
+  const s = v.toString();
   // Already HH:MM text format
-  if (/^\d{1,2}:\d{2}$/.test(v)) return v;
-  // Was stored as HH:MM:SS (old time input format) — convert
-  if (/^\d{2}:\d{2}:\d{2}/.test(v.toString())) return v.toString().slice(0,5);
-  // ISO string fallback
-  if (v.toString().includes('T')) return v.toString().split('T')[1].slice(0,5);
-  return v;
+  if (/^\d{1,2}:\d{2}$/.test(s)) return s;
+  // HH:MM:SS format
+  if (/^\d{2}:\d{2}:\d{2}/.test(s)) return s.slice(0,5);
+  // ISO string (from Sheets time or saved ISO)
+  if (s.includes('T')) {
+    // Use local time to avoid timezone offset issues
+    const dt = new Date(s);
+    const h  = String(dt.getHours()).padStart(2,'0');
+    const m  = String(dt.getMinutes()).padStart(2,'0');
+    return h + ':' + m;
+  }
+  return s;
+}
+
+function duplicarOrcamento() {
+  if (!currentId) return;
+  const orc     = coletarDados();
+  const cfg     = getCfg();
+  const novoId  = 'orc_' + Date.now();
+  const copia   = {
+    ...orc,
+    id:       novoId,
+    cliente:  (orc.cliente || 'Sem nome') + ' (cópia)',
+    status:   'proposta',
+    savedAt:  new Date().toISOString(),
+    savedBy:  cfg.user || 'anônimo',
+  };
+  const lista = listar();
+  lista.unshift(copia);
+  salvarLista(lista);
+  currentId     = novoId;
+  currentStatus = 'proposta';
+  // Load the copy into the editor
+  document.getElementById('cliente').value = copia.cliente;
+  renderStatusBadge();
+  renderSidebar();
+  sheetsSave(copia);
+  showToast('Orçamento duplicado ✓');
 }
 
 function autoSave() {
@@ -2323,7 +2335,7 @@ const STATUS_CONFIG = {
   confirmado: { label: 'Confirmado', icon: '✓', css: 'status-confirmado', next: ['executado', 'cancelado'] },
   executado:  { label: 'Executado',  icon: '★', css: 'status-executado',  next: [] },
   cancelado:  { label: 'Cancelado',  icon: '✕', css: 'status-cancelado',  next: [] },
-  apagado:    { label: 'Apagado',    icon: '✗', css: 'status-apagado',    next: [] },
+  apagado:    { label: 'Apagado',    icon: '✗', css: 'status-apagado',    next: ['proposta', 'confirmado', 'cancelado', 'executado'] },
 };
 
 const STATUS_ACTIONS = {
@@ -2331,6 +2343,7 @@ const STATUS_ACTIONS = {
   executado:  'Marcar como Executado',
   cancelado:  'Cancelar',
   apagado:    'Apagar',
+  proposta:   'Restaurar como Proposta',
 };
 
 function statusLabel(s) { return STATUS_CONFIG[s]?.label || s; }
@@ -2361,6 +2374,7 @@ function clicarStatus() {
       executado:  '#1a1a3a; color:#7a9cf5',
       cancelado:  '#2e1010; color:#f57a7a',
       apagado:    '#1e1e1e; color:#888888',
+      proposta:   '#3a2a0e; color:#f5c842',
     };
     const style = colors[s] || '#333; color:#ccc';
     return `<button class="status-opt-btn" style="background:${style}"
@@ -2964,9 +2978,9 @@ async function renderPDF(orc) {
       // badge
       const badgeH = r(4.5);
       ctx.fillStyle = C.gold;
-      ctx.fillRect(lx, r4y - r(3.5), r(23), badgeH);
+      ctx.fillRect(lx, r4y - r(3.5), r(34), badgeH);
       ctx.fillStyle = C.white;
-      ctx.font = `bold ${r(1.9)}px sans-serif`;
+      ctx.font = `bold ${r(2.2)}px sans-serif`;
       ctx.textAlign = 'left';
       ctx.fillText('VALOR COM DESCONTO', lx + r(1.5), r4y - r(3.5) + badgeH * 0.68);
 
