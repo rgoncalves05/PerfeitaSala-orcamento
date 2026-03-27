@@ -789,6 +789,8 @@ body {
   padding: 5px;
   vertical-align: top;
   transition: background 0.15s;
+  min-width: 0;
+  overflow: hidden;
 }
 .cal-day.empty { background: transparent; border-color: transparent; }
 .cal-day.today {
@@ -1105,6 +1107,95 @@ body {
   border: none;
   font-family: 'Poppins', sans-serif;
 }
+
+/* ── Modais de catálogo de blocos/itens ─────────────────────────────────── */
+.cat-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 5000;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+}
+.cat-overlay.open { display: flex; }
+.cat-modal {
+  background: #1a0905;
+  border: 1px solid #3a1f14;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 460px;
+  max-height: 80vh;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.7);
+  position: relative;
+}
+.cat-modal h3 {
+  font-family: 'Lora', serif;
+  color: var(--cream);
+  font-size: 17px;
+  margin-bottom: 4px;
+}
+.cat-modal .cat-subtitle {
+  font-size: 11px;
+  color: #7a5040;
+  margin-bottom: 16px;
+}
+.cat-list {
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cat-item-btn {
+  background: #2e1408;
+  border: 1px solid #3a1f14;
+  border-radius: 10px;
+  color: var(--cream);
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  padding: 12px 16px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.cat-item-btn:hover {
+  background: #3d1a0a;
+  border-color: var(--coral);
+}
+.cat-footer {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* ── Seletor de tipo de evento ──────────────────────────────────────────── */
+.tipo-evento-wrapper {
+  display: block;
+}
+.tipo-evento-wrapper input {
+  width: 100%;
+}
+.btn-tipo-evento {
+  background: none;
+  border: none;
+  border-radius: 5px;
+  color: var(--coral);
+  cursor: pointer;
+  padding: 0 2px;
+  font-size: 13px;
+  line-height: 1;
+  transition: filter 0.15s;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+.btn-tipo-evento:hover { filter: brightness(1.3); }
 
 .btn-save {
   padding: 10px 16px;
@@ -1656,9 +1747,12 @@ body {
           <label>👥 Convidados</label>
           <input type="number" id="pax" min="1" placeholder="Nº de pessoas" oninput="autoSave(); calcTotal()" style="font-weight:700;font-size:14px;">
         </div>
-        <div class="event-field">
+        <div class="event-field" style="position:relative;">
           <label>Evento</label>
-          <input type="text" id="tipoEvento" placeholder="Happy Hour" oninput="autoSave()">
+          <div class="tipo-evento-wrapper">
+            <input type="text" id="tipoEvento" placeholder="Tipo de evento..." oninput="autoSave()">
+            <button class="btn-tipo-evento" onclick="abrirCatTipo()" title="Escolher da lista">☰</button>
+          </div>
         </div>
       </div>
 
@@ -1668,7 +1762,7 @@ body {
         <div class="col-left">
           <div class="col-header">Cardápio</div>
           <div id="menuBlocks"></div>
-          <button class="btn-add-block" onclick="adicionarBloco()">
+          <button class="btn-add-block" onclick="abrirCatBloco()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Adicionar Bloco
           </button>
@@ -2048,24 +2142,21 @@ function novoOrcamento() {
     id,
     nome: '',
     cliente: '',
-    dataEvento: agora,
+    dataEvento: '',
     horario: '',
-    duracao: 3,
-    pax: 25,
-    tipoEvento: 'Happy Hour',
-    blocos: [
-      { id: 'b1', titulo: 'Coquetel Volante', itens: [''] },
-      { id: 'b2', titulo: 'Na Mesa', itens: [''] },
-    ],
-    locacaoOrig: 5000,
-    locacaoDesc: 3500,
-    temDesconto: true,
-    buffetPP: 360,
-    numGarcons: 2,
-    numBarman: 1,
-    servico: 1500,
-    impostosPct: 12,
-    incluso: 'espaço · mobiliário · staff · garçons · barman · louças · bebidas não alc. · segurança',
+    duracao: '',
+    pax: '',
+    tipoEvento: '',
+    blocos: [],
+    locacaoOrig: '',
+    locacaoDesc: '',
+    temDesconto: false,
+    buffetPP: '',
+    numGarcons: '',
+    numBarman: '',
+    servico: '',
+    impostosPct: '',
+    incluso: '',
     naoIncluso: '',
     status: 'proposta',
   };
@@ -2424,20 +2515,20 @@ function carregarOrcamento(id) {
   originalCliente = orc.cliente || '';
   document.getElementById('dataEvento').value    = (orc.dataEvento || '').split('T')[0];
   document.getElementById('horario').value       = horarioToDisplay(orc.horario);
-  document.getElementById('duracao').value       = +orc.duracao || 3;
-  document.getElementById('pax').value           = +orc.pax || 25;
+  document.getElementById('duracao').value       = orc.duracao !== '' && orc.duracao != null ? +orc.duracao : '';
+  document.getElementById('pax').value           = orc.pax !== '' && orc.pax != null ? +orc.pax : '';
   document.getElementById('tipoEvento').value    = orc.tipoEvento || '';
 
   // Pricing
   const temDesc = orc.temDesconto === true || String(orc.temDesconto).toUpperCase() === 'TRUE';
   document.getElementById('temDesconto').checked = temDesc;
-  document.getElementById('locacaoOrig').value   = +orc.locacaoOrig || 5000;
-  document.getElementById('locacaoDesc').value   = +orc.locacaoDesc || 3500;
-  document.getElementById('buffetPP').value      = +orc.buffetPP || 360;
-  document.getElementById('numGarcons').value    = +orc.numGarcons ?? 2;
-  document.getElementById('numBarman').value     = +orc.numBarman ?? 1;
-  document.getElementById('servico').value       = +orc.servico || 1500;
-  document.getElementById('impostosPct').value   = +orc.impostosPct ?? 12;
+  document.getElementById('locacaoOrig').value   = orc.locacaoOrig !== '' && orc.locacaoOrig != null ? +orc.locacaoOrig : '';
+  document.getElementById('locacaoDesc').value   = orc.locacaoDesc !== '' && orc.locacaoDesc != null ? +orc.locacaoDesc : '';
+  document.getElementById('buffetPP').value      = orc.buffetPP !== '' && orc.buffetPP != null ? +orc.buffetPP : '';
+  document.getElementById('numGarcons').value    = orc.numGarcons !== '' && orc.numGarcons != null ? +orc.numGarcons : '';
+  document.getElementById('numBarman').value     = orc.numBarman !== '' && orc.numBarman != null ? +orc.numBarman : '';
+  document.getElementById('servico').value       = orc.servico !== '' && orc.servico != null ? +orc.servico : '';
+  document.getElementById('impostosPct').value   = orc.impostosPct !== '' && orc.impostosPct != null ? +orc.impostosPct : '';
   document.getElementById('incluso').value       = orc.incluso || '';
   document.getElementById('naoIncluso').value    = orc.naoIncluso || '';
   currentStatus = orc.status || 'proposta';
@@ -2480,6 +2571,170 @@ function coletarDados() {
 
 // ── Blocos ─────────────────────────────────────────────────────────────────
 let blocoIdCounter = 0;
+let catalogoBlocos = [];   // carregado do Sheets na inicialização
+let catalogoTipos  = [];   // catálogo de tipos de evento
+
+let _catalogoPromise = null;
+
+// ── Catálogo: carregar da planilha ────────────────────────────────────────
+function carregarCatalogo() {
+  _catalogoPromise = (async () => {
+    try {
+      const cfg = getCfg();
+      if (!cfg.url) return;
+      const token = window._fbAuth?.currentUser
+        ? await window._fbAuth.currentUser.getIdToken(false)
+        : null;
+      if (!token) return;
+
+      // Carregar blocos e tipos em paralelo
+      const [resBlocos, resTipos] = await Promise.all([
+        fetch(cfg.url + '?' + new URLSearchParams({ action: 'listBlocos', token })).then(r => r.json()),
+        fetch(cfg.url + '?' + new URLSearchParams({ action: 'listTiposEvento', token })).then(r => r.json())
+      ]);
+      if (resBlocos && resBlocos.blocos) catalogoBlocos = resBlocos.blocos;
+      if (resTipos  && resTipos.tipos)   catalogoTipos  = resTipos.tipos;
+    } catch(e) {
+      console.warn('Catálogo não carregado:', e);
+    }
+  })();
+}
+
+// ── Modal: escolher bloco ─────────────────────────────────────────────────
+async function abrirCatBloco() {
+  const list = document.getElementById('catBlocoList');
+  list.innerHTML = '<p style="color:#7a5040;font-size:12px;padding:8px 0">Carregando catálogo...</p>';
+  document.getElementById('catBlocoOverlay').classList.add('open');
+
+  // Aguarda carregamento se ainda em andamento
+  if (_catalogoPromise) await _catalogoPromise;
+
+  list.innerHTML = '';
+  if (catalogoBlocos.length === 0) {
+    fecharCatBloco();
+    adicionarBlocoManual();
+    return;
+  }
+  catalogoBlocos.forEach(bloco => {
+    const btn = document.createElement('button');
+    btn.className = 'cat-item-btn';
+    btn.textContent = bloco.nome;
+    btn.onclick = () => { fecharCatBloco(); adicionarBlocoDocat(bloco); };
+    list.appendChild(btn);
+  });
+}
+function fecharCatBloco() {
+  document.getElementById('catBlocoOverlay').classList.remove('open');
+}
+function adicionarBlocoManual() {
+  fecharCatBloco();
+  const id = 'b_' + Date.now() + '_' + (blocoIdCounter++);
+  renderBloco({ id, titulo: '', itens: [''] });
+  const container = document.getElementById('menuBlocks');
+  const last = container.lastElementChild;
+  if (last) last.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  const input = last && last.querySelector('.menu-block-title');
+  if (input) input.focus();
+  autoSave();
+}
+function adicionarBlocoDocat(bloco) {
+  const id = 'b_' + Date.now() + '_' + (blocoIdCounter++);
+  // Inicia com lista vazia — usuário escolherá os itens pelo modal
+  renderBloco({ id, titulo: bloco.nome, itens: [] });
+  const container = document.getElementById('menuBlocks');
+  const last = container.lastElementChild;
+  if (last) last.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  autoSave();
+}
+
+// ── Modal: escolher item ──────────────────────────────────────────────────
+let _catItemBid = null;
+async function abrirCatItem(bid) {
+  _catItemBid = bid;
+  const blocoEl = document.querySelector(`.menu-block[data-id="${bid}"]`);
+  const titulo  = blocoEl ? (blocoEl.querySelector('.menu-block-title').value || '').trim() : '';
+
+  const overlay = document.getElementById('catItemOverlay');
+  const list    = document.getElementById('catItemList');
+  document.getElementById('catItemTitulo').textContent = titulo || 'Adicionar Item';
+  list.innerHTML = '<p style="color:#7a5040;font-size:12px;padding:8px 0">Carregando catálogo...</p>';
+  document.getElementById('catItemManualBtn').onclick = () => { fecharCatItem(); adicionarItemManual(bid); };
+  overlay.classList.add('open');
+
+  // Aguarda carregamento se ainda em andamento
+  if (_catalogoPromise) await _catalogoPromise;
+
+  const cat = catalogoBlocos.find(b => b.nome.toLowerCase() === titulo.toLowerCase());
+  list.innerHTML = '';
+
+  if (!cat || cat.itens.length === 0) {
+    fecharCatItem();
+    adicionarItemManual(bid);
+    return;
+  }
+
+  cat.itens.forEach(item => {
+    const btn = document.createElement('button');
+    btn.className = 'cat-item-btn';
+    btn.textContent = item;
+    btn.onclick = () => { fecharCatItem(); adicionarItem(bid, item); autoSave(); };
+    list.appendChild(btn);
+  });
+}
+function fecharCatItem() {
+  document.getElementById('catItemOverlay').classList.remove('open');
+  _catItemBid = null;
+}
+function adicionarItemManual(bid) {
+  adicionarItem(bid, '');
+}
+
+// ── Modal: escolher tipo de evento ────────────────────────────────────────
+async function abrirCatTipo() {
+  const list = document.getElementById('catTipoList');
+  list.innerHTML = '<p style="color:#7a5040;font-size:12px;padding:8px 0">Carregando...</p>';
+  document.getElementById('catTipoOverlay').classList.add('open');
+
+  if (_catalogoPromise) await _catalogoPromise;
+
+  list.innerHTML = '';
+  if (catalogoTipos.length === 0) {
+    list.innerHTML = '<p style="color:#7a5040;font-size:12px;padding:8px 0">Nenhum tipo cadastrado na planilha.</p>';
+    return;
+  }
+  catalogoTipos.forEach(t => {
+    const btn = document.createElement('button');
+    btn.className = 'cat-item-btn';
+    btn.innerHTML = `<strong>${escHtml(t.tipo)}</strong>`;
+    if (t.locacao || t.buffetPP) {
+      const detalhe = [
+        t.locacao  ? 'Locação: R$' + Number(t.locacao).toLocaleString('pt-BR')  : '',
+        t.buffetPP ? 'Buffet: R$'  + Number(t.buffetPP).toLocaleString('pt-BR') + '/pax' : '',
+        t.imposto  ? 'Imposto: '   + t.imposto + '%' : ''
+      ].filter(Boolean).join(' · ');
+      btn.innerHTML += `<br><span style="font-size:11px;color:#9a6050;font-weight:400">${detalhe}</span>`;
+    }
+    btn.onclick = () => { fecharCatTipo(); aplicarTipoEvento(t); };
+    list.appendChild(btn);
+  });
+}
+function fecharCatTipo() {
+  document.getElementById('catTipoOverlay').classList.remove('open');
+}
+function aplicarTipoEvento(t) {
+  // Preenche o campo de texto do evento
+  document.getElementById('tipoEvento').value = t.tipo;
+
+  // Preenche os campos de investimento — só se o valor existir na planilha
+  if (t.locacao  !== '') document.getElementById('locacaoOrig').value = t.locacao;
+  if (t.buffetPP !== '') document.getElementById('buffetPP').value    = t.buffetPP;
+  if (t.imposto  !== '') document.getElementById('impostosPct').value = t.imposto;
+  if (t.incluso  !== '') document.getElementById('incluso').value     = t.incluso;
+
+  calcTotal();
+  autoSave();
+}
+
 
 function renderBlocos(blocos) {
   const container = document.getElementById('menuBlocks');
@@ -2503,7 +2758,7 @@ function renderBloco(b) {
     </div>
     <div class="menu-block-items" id="items_${bid}"></div>
     <div style="padding:4px 14px 10px">
-      <button class="btn-add-item" onclick="adicionarItem('${bid}')">
+      <button class="btn-add-item" onclick="abrirCatItem('${bid}')">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Adicionar item
       </button>
@@ -3317,6 +3572,7 @@ function initAuth() {
       document.getElementById('loginBtn').textContent = 'Entrar';
       setSyncStatus('syncing', 'Conectando ao Sheets...');
       await syncFromSheets();
+      setTimeout(carregarCatalogo, 500); // aguarda token estabilizar antes de buscar catálogo
       renderSidebar();
       const lista = listar();
       if (lista.length) carregarOrcamento(lista[0].id);
@@ -4206,6 +4462,44 @@ async function gerarPDFCozinha() {
     <div class="cal-grid" id="calGrid"></div>
 
     <button class="cal-btn-fechar" onclick="fecharCalendario()">Fechar</button>
+  </div>
+</div>
+
+<!-- ── Modal: escolher bloco do catálogo ──────────────────────────────── -->
+<div class="cat-overlay" id="catBlocoOverlay" onclick="if(event.target===this)fecharCatBloco()">
+  <div class="cat-modal">
+    <h3>Adicionar Bloco</h3>
+    <p class="cat-subtitle">Escolha um bloco do catálogo ou adicione manualmente</p>
+    <div class="cat-list" id="catBlocoList"></div>
+    <div class="cat-footer">
+      <button class="btn-cancelar-modal" onclick="fecharCatBloco()">cancelar</button>
+      <button class="btn-save" onclick="adicionarBlocoManual()">+ Manual</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: escolher item do catálogo ───────────────────────────────── -->
+<div class="cat-overlay" id="catItemOverlay" onclick="if(event.target===this)fecharCatItem()">
+  <div class="cat-modal">
+    <h3 id="catItemTitulo">Adicionar Item</h3>
+    <p class="cat-subtitle">Escolha um item do catálogo ou adicione manualmente</p>
+    <div class="cat-list" id="catItemList"></div>
+    <div class="cat-footer">
+      <button class="btn-cancelar-modal" onclick="fecharCatItem()">cancelar</button>
+      <button class="btn-save" id="catItemManualBtn">+ Manual</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: escolher tipo de evento ─────────────────────────────────── -->
+<div class="cat-overlay" id="catTipoOverlay" onclick="if(event.target===this)fecharCatTipo()">
+  <div class="cat-modal">
+    <h3>Tipo de Evento</h3>
+    <p class="cat-subtitle">Escolha um tipo — os valores serão preenchidos automaticamente</p>
+    <div class="cat-list" id="catTipoList"></div>
+    <div class="cat-footer">
+      <button class="btn-cancelar-modal" onclick="fecharCatTipo()">cancelar</button>
+    </div>
   </div>
 </div>
 
