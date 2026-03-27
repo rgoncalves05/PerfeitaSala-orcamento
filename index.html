@@ -289,7 +289,7 @@ body {
   padding: 10px;
   background: var(--coral);
   color: white;
-  border: none;
+  border: 1.5px solid transparent;
   border-radius: 8px;
   font-family: 'Poppins', sans-serif;
   font-size: 12px;
@@ -301,7 +301,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 7px;
-  transition: background 0.15s;
+  transition: all 0.15s;
 }
 .btn-new:hover { background: #b83a50; }
 
@@ -450,26 +450,249 @@ body {
 
 .btn-cal {
   width: 100%;
-  padding: 8px;
-  background: transparent;
+  padding: 10px;
+  background: #2a1208;
   color: #c0906a;
   border: 1.5px solid #3a1f14;
   border-radius: 8px;
   font-family: 'Poppins', sans-serif;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  margin-top: 8px;
+  gap: 7px;
+  margin-top: 6px;
   transition: all 0.15s;
 }
-.btn-cal:hover { background: #2a120a; border-color: #c0906a; color: var(--cream); }
+.btn-cal:hover  { background: #3a1a0a; border-color: #8a5030; color: var(--cream); }
+.btn-cal.active { background: #3a1a0a; border-color: var(--coral); color: var(--cream); }
 
 /* ── Calendar Modal ── */
+.ev-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 4000;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 24px 16px;
+  overflow-y: auto;
+}
+.ev-overlay.open { display: flex; }
+.ev-modal {
+  background: #1a0905;
+  border: 1px solid #3a1f14;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 900px;
+  max-height: calc(100vh - 48px);
+  padding: 28px;
+  position: relative;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.7);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.ev-close {
+  position: absolute;
+  top: 16px; right: 20px;
+  background: none; border: none;
+  color: #c0806a; font-size: 26px;
+  cursor: pointer; line-height: 1;
+  transition: color 0.15s;
+}
+.ev-close:hover { color: var(--coral); }
+.ev-header {
+  margin-bottom: 18px;
+}
+.ev-title {
+  font-family: 'Lora', serif;
+  font-size: 20px;
+  color: var(--cream);
+  margin-bottom: 14px;
+}
+.ev-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.ev-date-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.ev-date-filter label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #7a5040;
+  font-family: 'Poppins', sans-serif;
+}
+.ev-date-filter input[type="date"] {
+  background: #3a1a0a;
+  border: 1.5px solid #7a4020;
+  border-radius: 6px;
+  color: #f5e0c0;
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 10px;
+  outline: none;
+  cursor: pointer;
+}
+.ev-date-filter input[type="date"]:focus { border-color: var(--coral); }
+.ev-date-filter input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.8) sepia(1) saturate(3) hue-rotate(330deg);
+  cursor: pointer;
+}
+.ev-table-wrap { overflow-x: auto; overflow-y: auto; flex: 1; min-height: 0; }
+.ev-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+}
+.ev-table th {
+  text-align: left;
+  padding: 8px 10px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: #c0906a;
+  border-bottom: 1px solid #3a1f14;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  background: #1a0905;
+  z-index: 1;
+}
+.ev-table th:hover { color: var(--cream); }
+.ev-table th.sort-asc::after  { content: ' ▲'; font-size: 8px; }
+.ev-table th.sort-desc::after { content: ' ▼'; font-size: 8px; }
+.ev-table td {
+  padding: 10px 10px;
+  border-bottom: 1px solid #1e0e07;
+  color: var(--cream);
+  vertical-align: middle;
+}
+.ev-table tr:last-child td { border-bottom: none; }
+.ev-table tr { cursor: pointer; transition: background 0.12s; }
+.ev-table tr:hover td { background: #2a1208; }
+.ev-table .col-valor { font-weight: 700; color: var(--coral); text-align: right; }
+.ev-table .col-data  { white-space: nowrap; }
+.ev-table .col-hora  { white-space: nowrap; }
+.ev-empty {
+  text-align: center;
+  color: #5a3a28;
+  padding: 40px;
+  font-size: 13px;
+}
+.ev-btn-fechar {
+  display: block;
+  margin: 20px auto 0;
+  padding: 10px 36px;
+  background: #2a1208;
+  border: 1.5px solid #5a3020;
+  border-radius: 8px;
+  color: #e0a080;
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.ev-btn-fechar:hover { border-color: var(--coral); color: var(--coral); }
+
+.graf-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 4000;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 24px 16px;
+  overflow-y: auto;
+}
+.graf-overlay.open { display: flex; }
+.graf-modal {
+  background: #1a0905;
+  border: 1px solid #3a1f14;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 860px;
+  padding: 28px;
+  position: relative;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.7);
+}
+.graf-close {
+  position: absolute;
+  top: 16px; right: 20px;
+  background: none; border: none;
+  color: #c0806a; font-size: 26px;
+  cursor: pointer; line-height: 1;
+  transition: color 0.15s;
+}
+.graf-close:hover { color: var(--coral); }
+.graf-title {
+  font-family: 'Lora', serif;
+  font-size: 20px;
+  color: var(--cream);
+  margin-bottom: 18px;
+}
+.graf-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.graf-chart-wrap {
+  margin-bottom: 32px;
+}
+.graf-chart-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #c0906a;
+  margin-bottom: 12px;
+}
+.graf-chart-canvas {
+  width: 100%;
+  border-radius: 8px;
+  background: #0e0604;
+  display: block;
+}
+.graf-btn-fechar {
+  display: block;
+  margin: 8px auto 0;
+  padding: 10px 36px;
+  background: #2a1208;
+  border: 1.5px solid #5a3020;
+  border-radius: 8px;
+  color: #e0a080;
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.graf-btn-fechar:hover { border-color: var(--coral); color: var(--coral); }
+
 .cal-overlay {
   display: none;
   position: fixed;
@@ -508,7 +731,8 @@ body {
 .cal-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 12px;
   margin-bottom: 18px;
 }
 .cal-title {
@@ -517,6 +741,8 @@ body {
   color: var(--cream);
   text-transform: capitalize;
   letter-spacing: 0.5px;
+  min-width: 180px;
+  text-align: center;
 }
 .cal-nav {
   background: #3a1a0a;
@@ -736,6 +962,55 @@ body {
   flex-shrink: 0;
 }
 .btn-pdf:hover { background: #7a2020; }
+.horario-combo {
+  position: relative;
+  width: 100%;
+}
+.horario-combo input {
+  width: 100%;
+  box-sizing: border-box;
+}
+.horario-arrow {
+  position: absolute;
+  right: 2px; top: 50%;
+  transform: translateY(-50%);
+  background: none; border: none;
+  color: var(--coral);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 6px;
+  opacity: 0.85;
+  transition: opacity 0.15s, transform 0.15s;
+  line-height: 1;
+}
+.horario-arrow:hover { opacity: 1; }
+.horario-arrow.open  { transform: translateY(-50%) rotate(180deg); }
+.horario-list {
+  display: none;
+  position: fixed;
+  background: #1a0905;
+  border: 1.5px solid #5a2e18;
+  border-radius: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 9999;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+  min-width: 100px;
+}
+.horario-list.open { display: block; }
+.horario-opt {
+  padding: 7px 12px;
+  font-family: monospace;
+  font-size: 13px;
+  color: var(--cream);
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: background 0.1s;
+}
+.horario-opt:hover  { background: #2a1208; }
+.horario-opt.sel    { background: #3a1a08; color: var(--coral); }
+.horario-opt.hidden { display: none; }
+
 .status-badge {
   display: inline-flex;
   align-items: center;
@@ -872,7 +1147,7 @@ body {
   gap: 0;
   background: var(--card-light);
   border-radius: 10px;
-  overflow: hidden;
+  overflow: visible;
   margin-bottom: 24px;
   border: 1.5px solid var(--card-dark);
 }
@@ -1189,7 +1464,7 @@ body {
   align-items: baseline;
 }
 .total-final .lbl { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--cream); }
-.total-final .val { font-family: 'Lora', serif; font-size: 18px; font-weight: 700; }
+.total-final .val { font-family: 'Poppins', sans-serif; font-size: 11px; font-weight: 700; }
 
 /* ── Toast ── */
 .toast {
@@ -1272,34 +1547,30 @@ body {
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Novo Orçamento
       </button>
-      <button class="btn-cal" onclick="abrirCalendario()">
+      <button class="btn-cal" id="btnCalendario" onclick="abrirCalendario()">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
           <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
         </svg>
         Calendário
       </button>
-    </div>
-    <div class="sidebar-filter">
-      <div class="sidebar-filter-wrap">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a07060" stroke-width="2.5">
-          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      <button class="btn-cal" id="btnEventos" onclick="abrirEventos()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+          <line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>
+          <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
         </svg>
-        <input type="text" id="filtroOrc" placeholder="Buscar por nome ou cliente..."
-               oninput="renderSidebar()">
-      </div>
+        Eventos
+      </button>
+      <button class="btn-cal" id="btnGraficos" onclick="abrirGraficos()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <rect x="3" y="12" width="4" height="9"/><rect x="10" y="7" width="4" height="14"/>
+          <rect x="17" y="3" width="4" height="18"/>
+        </svg>
+        Gráficos
+      </button>
     </div>
-    <div class="status-filters" id="statusFilters">
-      <button class="sf-chip sf-todos active"     onclick="setFiltroStatus('')">Todos</button>
-      <button class="sf-chip sf-proposta"         onclick="setFiltroStatus('proposta')">Proposta</button>
-      <button class="sf-chip sf-confirmado"       onclick="setFiltroStatus('confirmado')">Confirmado</button>
-      <button class="sf-chip sf-executado"        onclick="setFiltroStatus('executado')">Executado</button>
-      <button class="sf-chip sf-cancelado"        onclick="setFiltroStatus('cancelado')">Cancelado</button>
-      <button class="sf-chip sf-apagado"          onclick="setFiltroStatus('apagado')">Apagado</button>
-    </div>
-    <div class="sidebar-list" id="sidebarList">
-      <div class="sidebar-empty">Nenhum orçamento salvo ainda.<br>Clique em "Novo Orçamento" para começar.</div>
-    </div>
+
     <div class="sidebar-version">
       <span id="versionLabel">v1.0.0</span>
       <span onclick="fazerLogout()" title="Sair da conta">Sair →</span>
@@ -1322,8 +1593,7 @@ body {
     <div class="editor" id="editor" style="display:none">
 
       <div class="editor-header">
-        <input type="text" class="editor-title-input" id="orcNome"
-               placeholder="Nome do orçamento..." oninput="autoSave()">
+
         <button class="status-badge status-proposta" id="statusBadge" onclick="clicarStatus()">
           ● Proposta
         </button>
@@ -1331,9 +1601,13 @@ body {
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
           Salvar
         </button>
-        <button class="btn-pdf" onclick="gerarPDF()">
+        <button class="btn-pdf" id="btnPdfCliente" onclick="gerarPDF()">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-          Gerar PDF
+          PDF CLIENTE
+        </button>
+        <button class="btn-pdf" id="btnPdfCozinha" onclick="gerarPDFCozinha()" style="background:#5a3a10;border:1.5px solid #8a6a30;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>
+          PDF COZINHA
         </button>
       </div>
 
@@ -1357,9 +1631,18 @@ body {
           <label>Data</label>
           <input type="date" id="dataEvento" oninput="autoSave()">
         </div>
-        <div class="event-field">
+        <div class="event-field" style="position:relative;">
           <label>Horário</label>
-          <input type="time" id="horario" oninput="autoSave()">
+          <div class="horario-combo" id="horarioCombo">
+            <input type="text" id="horario" placeholder="00:00"
+                   maxlength="5" oninput="mascaraHorario(this); abrirHorarioDropdown(true);"
+                   onfocus="abrirHorarioDropdown(false)"
+                   onkeydown="navHorarioDropdown(event)"
+                   autocomplete="off"
+                   style="font-family:monospace;font-size:13px;letter-spacing:1px;padding-right:28px;">
+            <button type="button" class="horario-arrow" onclick="toggleHorarioDropdown()" tabindex="-1">▾</button>
+            <div class="horario-list" id="horarioList"></div>
+          </div>
         </div>
         <div class="event-field">
           <label>⏱ Duração (h)</label>
@@ -1488,6 +1771,19 @@ body {
               <div class="field">
                 <label>Texto de incluso</label>
                 <textarea id="incluso" rows="2" oninput="autoSave()">espaço · mobiliário · staff · garçons · barman · louças · bebidas não alc. · segurança</textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Não Incluso -->
+          <div class="pricing-card">
+            <div class="pricing-card-head">
+              <span class="pricing-card-head-title">NÃO Incluso</span>
+            </div>
+            <div class="pricing-card-body">
+              <div class="field">
+                <label>Texto de não incluso</label>
+                <textarea id="naoIncluso" rows="2" placeholder="deixe vazio para não aparecer no PDF..." oninput="autoSave()"></textarea>
               </div>
             </div>
           </div>
@@ -1665,21 +1961,11 @@ const PAGE_SIZE = 15;
 let sidebarPage  = 1;
 let sidebarIntersector = null;
 
-function itemHtml(o) {
-  return `
-    <div class="orc-item ${o.id === currentId ? 'active' : ''}" data-id="${o.id}" onclick="carregarOrcamento('${o.id}')">
-      <div class="orc-item-name">${escHtml(o.nome || o.cliente || 'Sem título')}<span class="orc-item-status st-${o.status||'proposta'}">${statusLabel(o.status||'proposta')}</span></div>
-      <div class="orc-item-meta">
-        <span style="color:#e8a070;font-weight:600">${escHtml(o.cliente || '—')}</span>
-        ${o.dataEvento ? '· ' + formatarData(o.dataEvento) : ''}
-        ${o.savedAt ? '<br><span style="opacity:0.7">💾 ' + formatarHorario(o.savedAt) + (o.savedBy && o.savedBy !== 'anônimo' ? ' · <span style="color:var(--coral);opacity:0.9">' + escHtml(o.savedBy) + '</span>' : '') + '</span>' : ''}
-      </div>
-      <button class="orc-item-del" onclick="event.stopPropagation(); deletarOrcamento('${o.id}')" title="Excluir">×</button>
-    </div>`;
-}
+function itemHtml(o) { return ''; }
 
 function setFiltroStatus(status) {
   const chips = document.querySelectorAll('#statusFilters .sf-chip');
+  if (!chips.length) return;
   if (status === '') {
     // "Todos" selected — clear all
     filtroStatusSet.clear();
@@ -1721,86 +2007,7 @@ function filtrarLista(todos, termo) {
   return lista;
 }
 
-function renderSidebar(reset) {
-  const todos   = listar();
-  const el      = document.getElementById('sidebarList');
-  const filtroEl = document.getElementById('filtroOrc');
-  const termo   = filtroEl ? filtroEl.value.toLowerCase().trim() : '';
-  const lista   = filtrarLista(todos, termo);
-
-  // Disconnect previous observer
-  if (sidebarIntersector) { sidebarIntersector.disconnect(); sidebarIntersector = null; }
-
-  if (!todos.length) {
-    el.innerHTML = '<div class="sidebar-empty">Nenhum orçamento salvo ainda.<br>Clique em "Novo Orçamento" para começar.</div>';
-    return;
-  }
-  if (!lista.length) {
-    el.innerHTML = '<div class="sidebar-empty">Nenhum resultado para<br><strong style="color:var(--coral)">"' + escHtml(termo) + '"</strong></div>';
-    return;
-  }
-
-  // Reset page on new render (filter change, new save, etc.)
-  if (reset !== false) { sidebarPage = 1; el.innerHTML = ''; }
-
-  const visible = lista.slice(0, sidebarPage * PAGE_SIZE);
-  const hasMore = visible.length < lista.length;
-
-  // Count badge
-  const countEl = el.querySelector('.sidebar-count');
-  const countHtml = `<div class="sidebar-count">${lista.length} orçamento${lista.length !== 1 ? 's' : ''}</div>`;
-
-  // Re-render all visible items (lightweight since IDs match)
-  const existingIds = new Set([...el.querySelectorAll('.orc-item')].map(d => d.dataset.id));
-  const newItems    = visible.filter(o => !existingIds.has(o.id));
-
-  if (reset !== false || newItems.length) {
-    // Full rebuild on reset; append-only on load-more
-    if (reset !== false) {
-      el.innerHTML = countHtml + visible.map(itemHtml).join('');
-    } else {
-      // Remove old sentinel if any
-      const oldSentinel = el.querySelector('.sidebar-sentinel');
-      if (oldSentinel) oldSentinel.remove();
-      // Update count
-      const oldCount = el.querySelector('.sidebar-count');
-      if (oldCount) oldCount.outerHTML = countHtml;
-      else el.insertAdjacentHTML('afterbegin', countHtml);
-      // Append new items
-      newItems.forEach(o => el.insertAdjacentHTML('beforeend', itemHtml(o)));
-    }
-  }
-
-  // Update active class without full re-render
-  el.querySelectorAll('.orc-item').forEach(div => {
-    div.className = 'orc-item' + (div.dataset.id === currentId ? ' active' : '');
-  });
-  // Ensure data-id is set (for active tracking above)
-  el.querySelectorAll('.orc-item').forEach((div, i) => {
-    if (!div.dataset.id) div.dataset.id = visible[i]?.id;
-  });
-
-  if (hasMore) {
-    // Append sentinel and observe it
-    const sentinel = document.createElement('div');
-    sentinel.className = 'sidebar-sentinel';
-    el.appendChild(sentinel);
-
-    // Add subtle loading indicator
-    const loader = document.createElement('div');
-    loader.className = 'sidebar-loading';
-    loader.textContent = '· · ·';
-    el.appendChild(loader);
-
-    sidebarIntersector = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting) {
-        sidebarPage++;
-        renderSidebar(false);
-      }
-    }, { root: el, rootMargin: '80px' });
-    sidebarIntersector.observe(sentinel);
-  }
-}
+function renderSidebar(reset) { /* list removed — use Eventos screen */ }
 
 function formatarHorario(iso) {
   try {
@@ -1853,6 +2060,7 @@ function novoOrcamento() {
     servico: 1500,
     impostosPct: 12,
     incluso: 'espaço · mobiliário · staff · garçons · barman · louças · bebidas não alc. · segurança',
+    naoIncluso: '',
     status: 'proposta',
   };
   const lista = listar();
@@ -1959,6 +2167,149 @@ function onClienteChange() {
   }
 }
 
+// ── Horario combobox ──────────────────────────────────────────────────────
+const HORARIO_OPTS = (() => {
+  const opts = [];
+  for (let h = 0; h <= 24; h++) {
+    for (let m of [0, 30]) {
+      if (h === 24 && m === 30) break;
+      opts.push(String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0'));
+    }
+  }
+  return opts;
+})();
+
+function buildHorarioList() {
+  const list = document.getElementById('horarioList');
+  if (!list || list.children.length) return;
+  HORARIO_OPTS.forEach(opt => {
+    const div = document.createElement('div');
+    div.className = 'horario-opt';
+    div.textContent = opt;
+    div.addEventListener('mousedown', e => {
+      e.preventDefault();
+      document.getElementById('horario').value = opt;
+      fecharHorarioDropdown();
+      autoSave();
+    });
+    list.appendChild(div);
+  });
+}
+
+function abrirHorarioDropdown(filtrar) {
+  buildHorarioList();
+  const input = document.getElementById('horario');
+  const list  = document.getElementById('horarioList');
+  const rect  = input.getBoundingClientRect();
+  list.style.top   = (rect.bottom + 2) + 'px';
+  list.style.left  = rect.left + 'px';
+  list.style.width = rect.width + 'px';
+  list.classList.add('open');
+  document.querySelector('.horario-arrow').classList.add('open');
+  // Only filter if explicitly requested (user typing)
+  if (filtrar) {
+    filtrarHorarioDropdown();
+  } else {
+    // Show ALL options
+    list.querySelectorAll('.horario-opt').forEach(o => o.classList.remove('hidden'));
+  }
+  // Scroll to current value
+  const val = input.value;
+  const opts = list.querySelectorAll('.horario-opt');
+  opts.forEach(o => o.classList.remove('sel'));
+  const cur = [...opts].find(o => o.textContent === val);
+  if (cur) { cur.classList.add('sel'); cur.scrollIntoView({ block: 'nearest' }); }
+}
+
+function fecharHorarioDropdown() {
+  document.getElementById('horarioList').classList.remove('open');
+  const arrow = document.querySelector('.horario-arrow');
+  if (arrow) arrow.classList.remove('open');
+}
+
+function toggleHorarioDropdown() {
+  const list = document.getElementById('horarioList');
+  if (list.classList.contains('open')) {
+    fecharHorarioDropdown();
+  } else {
+    document.getElementById('horario').focus();
+    abrirHorarioDropdown(false);
+  }
+}
+
+function filtrarHorarioDropdown() {
+  const val  = document.getElementById('horario').value.trim();
+  const list = document.getElementById('horarioList');
+  if (!list) return;
+  // Show all if empty; filter only if user typed something meaningful
+  const filter = val.length >= 2 ? val : '';
+  list.querySelectorAll('.horario-opt').forEach(o => {
+    o.classList.toggle('hidden', filter.length > 0 && !o.textContent.startsWith(filter));
+  });
+}
+
+function navHorarioDropdown(e) {
+  const list = document.getElementById('horarioList');
+  if (!list.classList.contains('open')) return;
+  const visible = [...list.querySelectorAll('.horario-opt:not(.hidden)')];
+  const cur = list.querySelector('.horario-opt.sel');
+  let idx = visible.indexOf(cur);
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    idx = Math.min(idx + 1, visible.length - 1);
+    visible.forEach(o => o.classList.remove('sel'));
+    if (visible[idx]) { visible[idx].classList.add('sel'); visible[idx].scrollIntoView({ block: 'nearest' }); }
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    idx = Math.max(idx - 1, 0);
+    visible.forEach(o => o.classList.remove('sel'));
+    if (visible[idx]) { visible[idx].classList.add('sel'); visible[idx].scrollIntoView({ block: 'nearest' }); }
+  } else if (e.key === 'Enter') {
+    if (cur) { document.getElementById('horario').value = cur.textContent; fecharHorarioDropdown(); autoSave(); }
+  } else if (e.key === 'Escape') {
+    fecharHorarioDropdown();
+  }
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', e => {
+  if (!document.getElementById('horarioCombo').contains(e.target)) {
+    fecharHorarioDropdown();
+  }
+});
+
+function mascaraHorario(el) {
+  let v = el.value.replace(/[^0-9hH:]/g, '');
+  v = v.replace(/[hH]/, ':');
+  if (/^\d{2}$/.test(v) && el.value.length === 2) v = v + ':';
+  if (v.length > 5) v = v.slice(0, 5);
+  el.value = v;
+  const match = v.match(/^(\d{1,2}):(\d{2})$/);
+  if (match) {
+    const h = parseInt(match[1]), m = parseInt(match[2]);
+    if (h > 23 || m > 59) {
+      el.style.borderColor = '#f57a7a';
+    } else {
+      el.style.borderColor = '';
+      autoSave();
+    }
+  } else {
+    el.style.borderColor = '';
+  }
+}
+
+// Convert stored horario to display format (HH:MM)
+function horarioToDisplay(v) {
+  if (!v) return '';
+  // Already HH:MM text format
+  if (/^\d{1,2}:\d{2}$/.test(v)) return v;
+  // Was stored as HH:MM:SS (old time input format) — convert
+  if (/^\d{2}:\d{2}:\d{2}/.test(v.toString())) return v.toString().slice(0,5);
+  // ISO string fallback
+  if (v.toString().includes('T')) return v.toString().split('T')[1].slice(0,5);
+  return v;
+}
+
 function autoSave() {
   clearTimeout(autoSaveTimer);
   autoSaveTimer = setTimeout(() => salvarOrcamento(true), 800);  // skip overlap on autosave
@@ -2052,11 +2403,11 @@ function carregarOrcamento(id) {
   currentId = id;
 
   // Fill header fields
-  document.getElementById('orcNome').value       = orc.nome || '';
+
   document.getElementById('cliente').value       = orc.cliente || '';
   originalCliente = orc.cliente || '';
   document.getElementById('dataEvento').value    = orc.dataEvento || '';
-  document.getElementById('horario').value       = orc.horario || '';
+  document.getElementById('horario').value       = horarioToDisplay(orc.horario);
   document.getElementById('duracao').value       = orc.duracao || 3;
   document.getElementById('pax').value           = orc.pax || 25;
   document.getElementById('tipoEvento').value    = orc.tipoEvento || '';
@@ -2071,6 +2422,7 @@ function carregarOrcamento(id) {
   document.getElementById('servico').value       = orc.servico || 1500;
   document.getElementById('impostosPct').value   = orc.impostosPct ?? 12;
   document.getElementById('incluso').value       = orc.incluso || '';
+  document.getElementById('naoIncluso').value    = orc.naoIncluso || '';
   currentStatus = orc.status || 'proposta';
   renderStatusBadge();
 
@@ -2087,7 +2439,7 @@ function carregarOrcamento(id) {
 function coletarDados() {
   return {
     id: currentId,
-    nome:        document.getElementById('orcNome').value,
+    nome: '',
     cliente:     document.getElementById('cliente').value,
     dataEvento:  document.getElementById('dataEvento').value,
     horario:     document.getElementById('horario').value,
@@ -2104,6 +2456,7 @@ function coletarDados() {
     servico:     +document.getElementById('servico').value,
     impostosPct: +document.getElementById('impostosPct').value,
     incluso:     document.getElementById('incluso').value,
+    naoIncluso:  document.getElementById('naoIncluso').value,
     status:      currentStatus,
   };
 }
@@ -2351,7 +2704,7 @@ function showToast(msg) {
 async function gerarPDF() {
   salvarOrcamento();
   const orc = coletarDados();
-  const btn = document.querySelector('.btn-pdf');
+  const btn = document.getElementById('btnPdfCliente');
   btn.textContent = '⏳ Gerando...';
   btn.disabled = true;
 
@@ -2362,7 +2715,7 @@ async function gerarPDF() {
     console.error('PDF error:', e);
     alert('Erro ao gerar PDF:\n\n' + e.message);
   } finally {
-    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg> Gerar PDF';
+    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg> PDF CLIENTE';
     btn.disabled = false;
   }
 }
@@ -2612,7 +2965,7 @@ async function renderPDF(orc) {
       ctx.fillStyle = C.white;
       ctx.font = `bold ${r(1.9)}px sans-serif`;
       ctx.textAlign = 'left';
-      ctx.fillText('DESCONTO ESPECIAL', lx + r(1.5), r4y - r(3.5) + badgeH * 0.68);
+      ctx.fillText('VALOR COM DESCONTO', lx + r(1.5), r4y - r(3.5) + badgeH * 0.68);
 
     } else {
       // Simple card: sub text + value centered vertically
@@ -2668,11 +3021,13 @@ async function renderPDF(orc) {
   const ng = orc.numGarcons || 0, nb = orc.numBarman || 0;
   const srvLbl = `${ng} Garçon${ng!==1?'s':''} + ${nb} Barman${nb!==1?'s':''}`;
 
-  iy = drawCard('Locação do Espaço', null, C.cardLight, iy, H_LOC,
+  iy = drawCard('Locação do Espaço',
+    tem ? null : fmtMoney(orc.locacaoOrig||0),  // valor direto se sem desconto
+    C.cardLight, iy, H_LOC,
     'espaço · mobiliário · staff · limpeza · segurança · florinha',
-    fmtMoney(orc.locacaoOrig||0),
-    '- ' + fmtMoney((orc.locacaoOrig||0)-(orc.locacaoDesc||0)),
-    fmtMoney(orc.locacaoDesc||0));
+    tem ? fmtMoney(orc.locacaoOrig||0) : null,  // origVal só se tem desconto
+    tem ? '- ' + fmtMoney((orc.locacaoOrig||0)-(orc.locacaoDesc||0)) : null,
+    tem ? fmtMoney(orc.locacaoDesc||0) : null);
 
   iy = drawCard('Buffet — ' + pax + ' pax', fmtMoney(buffet), C.cardDark, iy, H_BUF,
     'cardápio completo conforme descrito', null, null, null);
@@ -2703,14 +3058,35 @@ async function renderPDF(orc) {
   iy += TOT_H + r(2);
 
   // Incluso strip
+  const incH = r(7);
   ctx.fillStyle = C.coralDark || '#7A2020';
-  ctx.fillRect(C2X, iy, CW, r(7));
+  ctx.fillRect(C2X, iy, CW, incH);
   ctx.fillStyle = C.cream;
-  ctx.font = `italic ${r(2.3)}px sans-serif`;
   ctx.textAlign = 'left';
-  const incText = 'Incluso: ' + (orc.incluso || '');
-  ctx.fillText(incText, C2X + r(2), iy + r(4.5), CW - r(4));
+  // "Incluso:" bold label
+  ctx.font = `bold ${r(2.6)}px sans-serif`;
+  const incLabel = 'Incluso:';
+  ctx.fillText(incLabel, C2X + r(2), iy + r(4.8));
+  const incLabelW = ctx.measureText(incLabel + ' ').width;
+  // rest of text normal
+  ctx.font = `${r(2.3)}px sans-serif`;
+  ctx.fillText((orc.incluso || ''), C2X + r(2) + incLabelW, iy + r(4.8), CW - r(4) - incLabelW);
   iy += r(9);
+
+  // NÃO Incluso strip (only if content exists)
+  if (orc.naoIncluso && orc.naoIncluso.trim()) {
+    ctx.fillStyle = '#4a2010';
+    ctx.fillRect(C2X, iy, CW, incH);
+    ctx.fillStyle = C.cream;
+    ctx.textAlign = 'left';
+    ctx.font = `bold ${r(2.6)}px sans-serif`;
+    const naoLabel = 'NÃO incluso:';
+    ctx.fillText(naoLabel, C2X + r(2), iy + r(4.8));
+    const naoLabelW = ctx.measureText(naoLabel + ' ').width;
+    ctx.font = `${r(2.3)}px sans-serif`;
+    ctx.fillText(orc.naoIncluso.trim(), C2X + r(2) + naoLabelW, iy + r(4.8), CW - r(4) - naoLabelW);
+    iy += r(9);
+  }
 
   // Opcionais
   ctx.fillStyle = C.coralDeep;
@@ -2944,6 +3320,375 @@ initAuth();
 
 // Config modal removed
 
+// ── Eventos ────────────────────────────────────────────────────────────────
+let evFiltroStatusSet = new Set();
+
+function calcTotalOrc(orc) {
+  const pax    = orc.pax || 0;
+  const buffet = (orc.buffetPP || 0) * pax;
+  const tem    = orc.temDesconto !== false;
+  const locVal = tem ? (orc.locacaoDesc || 0) : (orc.locacaoOrig || 0);
+  const serv   = orc.servico || 0;
+  const imp    = (locVal + buffet + serv) * ((orc.impostosPct || 0) / 100);
+  return locVal + buffet + serv + imp;
+}
+
+function fmtBRLev(v) {
+  return 'R$ ' + v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
+function normDateEv(d) {
+  if (!d) return '';
+  if (!d.includes('T')) return d;
+  const dt = new Date(d);
+  return dt.getFullYear() + '-' +
+    String(dt.getMonth()+1).padStart(2,'0') + '-' +
+    String(dt.getDate()).padStart(2,'0');
+}
+
+function fmtDateEv(d) {
+  if (!d) return '—';
+  const DIAS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const parts = normDateEv(d).split('-');
+  if (parts.length < 3) return d;
+  const dt = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+  return DIAS[dt.getDay()] + ' ' + parts[2] + '/' + parts[1] + '/' + parts[0];
+}
+
+function abrirEventos() {
+  evFiltroStatusSet.clear();
+  evSortCol = 'data'; evSortDir = 1;
+  document.querySelectorAll('#evStatusFilters .sf-chip').forEach(c => {
+    c.classList.toggle('active', c.classList.contains('sf-todos'));
+  });
+  document.getElementById('evDataIni').value = '';
+  document.getElementById('evDataFim').value = '';
+  const tf = document.getElementById('evTextFilter');
+  if (tf) tf.value = '';
+  // Reset sort headers
+  ['data','hora','evento','cliente','pax','status','valor'].forEach(c => {
+    const th = document.getElementById('evSort' + c.charAt(0).toUpperCase() + c.slice(1));
+    if (th) { th.classList.remove('sort-asc','sort-desc'); }
+  });
+  const th = document.getElementById('evSortData');
+  if (th) th.classList.add('sort-asc');
+  renderEventos();
+  document.getElementById('evOverlay').classList.add('open');
+  setSidebarBtnActive('btnEventos');
+}
+
+function fecharEventos() {
+  document.getElementById('evOverlay').classList.remove('open');
+  setSidebarBtnActive(null);
+}
+
+function limparDatasEv() {
+  document.getElementById('evDataIni').value = '';
+  document.getElementById('evDataFim').value = '';
+  renderEventos();
+}
+
+function setEvFiltroStatus(status) {
+  const chips = document.querySelectorAll('#evStatusFilters .sf-chip');
+  if (status === '') {
+    evFiltroStatusSet.clear();
+  } else {
+    if (evFiltroStatusSet.has(status)) evFiltroStatusSet.delete(status);
+    else evFiltroStatusSet.add(status);
+  }
+  chips.forEach(c => {
+    if (c.classList.contains('sf-todos')) {
+      c.classList.toggle('active', evFiltroStatusSet.size === 0);
+    } else {
+      const s = [...c.classList].find(cl => cl.startsWith('sf-') && cl !== 'sf-chip');
+      c.classList.toggle('active', evFiltroStatusSet.has(s ? s.replace('sf-','') : ''));
+    }
+  });
+  renderEventos();
+}
+
+let evSortCol = 'data';
+let evSortDir = 1; // 1=asc, -1=desc
+
+function sortEventos(col) {
+  if (evSortCol === col) {
+    evSortDir *= -1;
+  } else {
+    evSortCol = col;
+    evSortDir = 1;
+  }
+  // Update header indicators
+  ['data','hora','evento','cliente','pax','status','valor'].forEach(c => {
+    const th = document.getElementById('evSort' + c.charAt(0).toUpperCase() + c.slice(1));
+    if (!th) return;
+    th.classList.remove('sort-asc','sort-desc');
+    if (c === evSortCol) th.classList.add(evSortDir === 1 ? 'sort-asc' : 'sort-desc');
+  });
+  renderEventos();
+}
+
+function renderEventos() {
+  let lista = listar();
+
+  // Filter by status
+  if (evFiltroStatusSet.size > 0) {
+    lista = lista.filter(o => evFiltroStatusSet.has(o.status || 'proposta'));
+  }
+
+  // Filter by date range
+  const ini = document.getElementById('evDataIni').value;
+  const fim = document.getElementById('evDataFim').value;
+  if (ini) lista = lista.filter(o => normDateEv(o.dataEvento) >= ini);
+  if (fim) lista = lista.filter(o => normDateEv(o.dataEvento) <= fim);
+
+  // Text filter — search across all fields
+  const txt = (document.getElementById('evTextFilter')?.value || '').toLowerCase().trim();
+  if (txt) {
+    lista = lista.filter(o =>
+      (o.cliente    || '').toLowerCase().includes(txt) ||
+
+      (o.tipoEvento || '').toLowerCase().includes(txt) ||
+      (o.status     || '').toLowerCase().includes(txt) ||
+      fmtDateEv(o.dataEvento).toLowerCase().includes(txt) ||
+      String(o.pax  || '').includes(txt)
+    );
+  }
+
+  // Sort
+  lista.sort((a, b) => {
+    let va, vb;
+    switch (evSortCol) {
+      case 'data':
+        va = normDateEv(a.dataEvento) || '';
+        vb = normDateEv(b.dataEvento) || '';
+        if (va === vb) {
+          va = horaParaMinutos(a.horario) || 0;
+          vb = horaParaMinutos(b.horario) || 0;
+          return (va - vb) * evSortDir;
+        }
+        return va.localeCompare(vb) * evSortDir;
+      case 'hora':
+        va = horaParaMinutos(a.horario) || 0;
+        vb = horaParaMinutos(b.horario) || 0;
+        return (va - vb) * evSortDir;
+      case 'evento':
+        return (a.tipoEvento || '').localeCompare(b.tipoEvento || '') * evSortDir;
+      case 'cliente':
+        return (a.cliente || '').localeCompare(b.cliente || '') * evSortDir;
+      case 'pax':
+        return ((a.pax || 0) - (b.pax || 0)) * evSortDir;
+      case 'status':
+        return (a.status || 'proposta').localeCompare(b.status || 'proposta') * evSortDir;
+      case 'valor':
+        return (calcTotalOrc(a) - calcTotalOrc(b)) * evSortDir;
+      default: return 0;
+    }
+  });
+
+  const tbody = document.getElementById('evTableBody');
+  const empty = document.getElementById('evEmpty');
+
+  if (!lista.length) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  const statusColors = {
+    proposta: '#f5c842', confirmado: '#4ccc7a',
+    executado: '#7a9cf5', cancelado: '#f57a7a', apagado: '#666'
+  };
+
+  tbody.innerHTML = lista.map(o => {
+    const st    = o.status || 'proposta';
+    const col   = statusColors[st] || '#888';
+    const hora  = o.horario ? horarioToDisplay(o.horario) : '—';
+    const total = calcTotalOrc(o);
+    return `<tr onclick="fecharEventos(); carregarOrcamento('${o.id}')">
+      <td class="col-data">${fmtDateEv(o.dataEvento)}</td>
+      <td class="col-hora">${hora}</td>
+      <td>${escHtml(o.tipoEvento || '—')}</td>
+      <td>${escHtml(o.cliente || '—')}</td>
+      <td style="text-align:center">${o.pax || '—'}</td>
+      <td><span class="orc-item-status" style="background:${col}22;color:${col};border:1px solid ${col}55">${statusLabel(st)}</span></td>
+      <td class="col-valor">${total > 0 ? fmtBRLev(total) : '—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Gráficos ───────────────────────────────────────────────────────────────
+let grafFiltroStatusSet = new Set();
+
+function abrirGraficos() {
+  grafFiltroStatusSet.clear();
+  document.querySelectorAll('#grafStatusFilters .sf-chip').forEach(c => {
+    c.classList.toggle('active', c.classList.contains('sf-todos'));
+  });
+  document.getElementById('grafDataIni').value = '';
+  document.getElementById('grafDataFim').value = '';
+  document.getElementById('grafOverlay').classList.add('open');
+  setSidebarBtnActive('btnGraficos');
+  setTimeout(renderGraficos, 50);
+}
+
+function fecharGraficos() {
+  document.getElementById('grafOverlay').classList.remove('open');
+  setSidebarBtnActive(null);
+}
+
+function limparDatasGraf() {
+  document.getElementById('grafDataIni').value = '';
+  document.getElementById('grafDataFim').value = '';
+  renderGraficos();
+}
+
+function setGrafFiltroStatus(status) {
+  const chips = document.querySelectorAll('#grafStatusFilters .sf-chip');
+  if (status === '') {
+    grafFiltroStatusSet.clear();
+  } else {
+    if (grafFiltroStatusSet.has(status)) grafFiltroStatusSet.delete(status);
+    else grafFiltroStatusSet.add(status);
+  }
+  chips.forEach(c => {
+    if (c.classList.contains('sf-todos')) {
+      c.classList.toggle('active', grafFiltroStatusSet.size === 0);
+    } else {
+      const s = [...c.classList].find(cl => cl.startsWith('sf-') && cl !== 'sf-chip');
+      c.classList.toggle('active', grafFiltroStatusSet.has(s ? s.replace('sf-','') : ''));
+    }
+  });
+  renderGraficos();
+}
+
+function renderGraficos() {
+  let lista = listar();
+
+  // Filter by status
+  if (grafFiltroStatusSet.size > 0) {
+    lista = lista.filter(o => grafFiltroStatusSet.has(o.status || 'proposta'));
+  }
+
+  // Filter by date range
+  const ini = document.getElementById('grafDataIni').value;
+  const fim = document.getElementById('grafDataFim').value;
+  if (ini) lista = lista.filter(o => normDateEv(o.dataEvento) >= ini);
+  if (fim) lista = lista.filter(o => normDateEv(o.dataEvento) <= fim);
+
+  // Group by YYYY-MM
+  const byMonth = {};
+  lista.forEach(o => {
+    if (!o.dataEvento) return;
+    const d = normDateEv(o.dataEvento);
+    if (!d) return;
+    const key = d.slice(0, 7); // YYYY-MM
+    if (!byMonth[key]) byMonth[key] = { count: 0, receita: 0, pax: 0 };
+    byMonth[key].count++;
+    byMonth[key].receita += calcTotalOrc(o);
+    byMonth[key].pax     += (o.pax || 0);
+  });
+
+  const keys   = Object.keys(byMonth).sort();
+  const MESES  = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const labels = keys.map(k => {
+    const [y, m] = k.split('-');
+    return MESES[parseInt(m)-1] + ' ' + y.slice(2);
+  });
+
+  const counts  = keys.map(k => byMonth[k].count);
+  const receita = keys.map(k => byMonth[k].receita);
+  const pax     = keys.map(k => byMonth[k].pax);
+
+  drawBarChart('grafCanvas1', labels, counts,  '#D54A61', (v) => v);
+  drawBarChart('grafCanvas2', labels, receita, '#f5c842', (v) => 'R$' + Math.round(v/1000) + 'k');
+  drawBarChart('grafCanvas3', labels, pax,     '#4ccc7a', (v) => v);
+}
+
+function drawBarChart(canvasId, labels, values, color, fmtVal) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const W = canvas.offsetWidth || 800;
+  canvas.width  = W;
+  canvas.height = 220;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, W, 220);
+
+  // Background
+  ctx.fillStyle = '#0e0604';
+  ctx.fillRect(0, 0, W, 220);
+
+  if (!labels.length) {
+    ctx.fillStyle = '#8a6040';
+    ctx.font = '13px Poppins, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Nenhum dado para o período selecionado', W/2, 115);
+    return;
+  }
+
+  const PAD_L = 62, PAD_R = 20, PAD_T = 24, PAD_B = 44;
+  const chartW = W - PAD_L - PAD_R;
+  const chartH = 220 - PAD_T - PAD_B;
+  const maxVal = Math.max(...values, 1);
+
+  // Grid lines + Y labels
+  const gridLines = 4;
+  for (let i = 0; i <= gridLines; i++) {
+    const y = PAD_T + chartH - (i / gridLines) * chartH;
+    // Grid line — visible but subtle
+    ctx.strokeStyle = '#7a4a2a';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(PAD_L, y); ctx.lineTo(W - PAD_R, y); ctx.stroke();
+    ctx.setLineDash([]);
+    // Y axis label — bright and readable
+    const v = (maxVal * i / gridLines);
+    ctx.fillStyle = '#c0906a';
+    ctx.font = '11px Poppins, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(fmtVal(v), PAD_L - 6, y + 4);
+  }
+
+  // Bars
+  const barW = Math.min((chartW / labels.length) * 0.55, 60);
+  const gap  = chartW / labels.length;
+
+  labels.forEach((lbl, i) => {
+    const val   = values[i] || 0;
+    const barH  = (val / maxVal) * chartH;
+    const x     = PAD_L + i * gap + gap / 2 - barW / 2;
+    const y     = PAD_T + chartH - barH;
+
+    // Bar
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 0.9;
+    ctx.beginPath();
+    ctx.roundRect(x, y, barW, barH, [4, 4, 0, 0]);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // Value label — larger, not bold, white
+    if (val > 0) {
+      ctx.font = '13px Poppins, sans-serif';
+      ctx.textAlign = 'center';
+      if (barH > 20) {
+        ctx.fillStyle = 'rgba(255,255,255,0.95)';
+        ctx.fillText(fmtVal(val), x + barW/2, y + 16);
+      } else {
+        ctx.fillStyle = color;
+        ctx.fillText(fmtVal(val), x + barW/2, y - 5);
+      }
+    }
+
+    // X axis label — brighter
+    ctx.fillStyle = '#c0906a';
+    ctx.font = '11px Poppins, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(lbl, x + barW/2, PAD_T + chartH + 18);
+  });
+}
+
+
 // ── Calendar ──────────────────────────────────────────────────────────────
 let calYear  = new Date().getFullYear();
 let calMonth = new Date().getMonth(); // 0-based
@@ -2953,20 +3698,28 @@ const MESES_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
                   'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS_PT  = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 
+function setSidebarBtnActive(id) {
+  ['btnCalendario','btnEventos','btnGraficos'].forEach(b => {
+    const el = document.getElementById(b);
+    if (el) el.classList.toggle('active', b === id);
+  });
+}
+
 function abrirCalendario() {
   calYear  = new Date().getFullYear();
   calMonth = new Date().getMonth();
   calFiltroStatusSet.clear();
-  // Reset filter chips
   document.querySelectorAll('#calFilters .sf-chip').forEach(c => {
     c.classList.toggle('active', c.classList.contains('sf-todos'));
   });
   renderCalendario();
   document.getElementById('calOverlay').classList.add('open');
+  setSidebarBtnActive('btnCalendario');
 }
 
 function fecharCalendario() {
   document.getElementById('calOverlay').classList.remove('open');
+  setSidebarBtnActive(null);
 }
 
 function navCal(dir) {
@@ -3096,11 +3849,321 @@ function renderCalendario() {
 
   grid.innerHTML = html;
 }
-document.getElementById('statusModal').addEventListener('click', function(e) {
-  if (e.target === this) fecharStatusModal();
-});
+
+
+
+// ── PDF COZINHA ────────────────────────────────────────────────────────────
+async function gerarPDFCozinha() {
+  salvarOrcamento(true);
+  const orc = coletarDados();
+  const btn = document.getElementById('btnPdfCozinha');
+  btn.textContent = 'Gerando...';
+  btn.disabled = true;
+
+  await new Promise(res => setTimeout(res, 60));
+
+  try {
+    const DPI = 150;
+    const W   = Math.round(8.27 * DPI);
+    const H   = Math.round(11.69 * DPI);
+    const cv  = document.createElement('canvas');
+    cv.width  = W; cv.height = H;
+    const ctx = cv.getContext('2d');
+    const mm  = DPI / 25.4;
+    function r(v) { return Math.round(v * mm); }
+
+    // Pure white background — no fills, no colors (save ink)
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, W, H);
+
+    // Helper: format date with day of week
+    function fmtDateFull(d) {
+      if (!d) return '—';
+      const DIAS = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira',
+                    'Quinta-feira','Sexta-feira','Sábado'];
+      const MESES = ['janeiro','fevereiro','março','abril','maio','junho',
+                     'julho','agosto','setembro','outubro','novembro','dezembro'];
+      const parts = d.split('T')[0].split('-');
+      if (parts.length < 3) return d;
+      const dt  = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+      const dia = DIAS[dt.getDay()];
+      return `${dia}, ${parseInt(parts[2])} de ${MESES[parseInt(parts[1])-1]} de ${parts[0]}`;
+    }
+    function fmtTime(t) {
+      if (!t) return '';
+      return t.toString().slice(0,5).replace(':','h');
+    }
+
+    const hora    = fmtTime(orc.horario);
+    const dataStr = fmtDateFull(orc.dataEvento);
+
+    // ── HEADER — title only, no background ───────────────────────────────
+    let cy = r(14);
+
+    // Logo text
+    ctx.font      = `bold ${r(3.5)}px sans-serif`;
+    ctx.fillStyle = '#2C1A0E';
+    ctx.textAlign = 'left';
+    ctx.fillText('PERFEITA SALA', r(10), cy);
+    cy += r(10);
+
+    // Main title
+    ctx.font      = `bold ${r(5.5)}px sans-serif`;
+    ctx.fillStyle = '#000000';
+    ctx.fillText('Lista de Produção para:', r(10), cy);
+    cy += r(8);
+
+    // Date + time on next line (bigger, prominent)
+    ctx.font      = `bold ${r(7)}px sans-serif`;
+    ctx.fillStyle = '#000000';
+    const dateTimeStr = hora ? `${dataStr} — ${hora}` : dataStr;
+    ctx.fillText(dateTimeStr, r(10), cy);
+    cy += r(5);
+
+    // Separator line
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth   = r(0.5);
+    ctx.beginPath();
+    ctx.moveTo(r(10), cy);
+    ctx.lineTo(W - r(10), cy);
+    ctx.stroke();
+    cy += r(6);
+
+    // ── EVENT SUMMARY — compact, no background ────────────────────────────
+    const fields = [
+      ['Cliente', orc.cliente || '—'],
+      ['Convidados', String(orc.pax || '—')],
+      ['Duração', orc.duracao ? orc.duracao + 'h' : '—'],
+      ['Evento', orc.tipoEvento || '—'],
+    ];
+    const cols = 4;
+    const fw   = (W - r(20)) / cols;
+    fields.forEach(([lbl, val], i) => {
+      const fx = r(10) + i * fw;
+      ctx.font      = `bold ${r(2.4)}px sans-serif`;
+      ctx.fillStyle = '#666666';
+      ctx.textAlign = 'left';
+      ctx.fillText(lbl.toUpperCase(), fx, cy + r(3));
+      ctx.font      = `bold ${r(4)}px sans-serif`;
+      ctx.fillStyle = '#000000';
+      ctx.fillText(val, fx, cy + r(9));
+    });
+    cy += r(16);
+
+    // Separator line
+    ctx.strokeStyle = '#CCCCCC';
+    ctx.lineWidth   = r(0.3);
+    ctx.beginPath();
+    ctx.moveTo(r(10), cy);
+    ctx.lineTo(W - r(10), cy);
+    ctx.stroke();
+    cy += r(8);
+
+    // ── MENU BLOCKS with checklist ────────────────────────────────────────
+    const blocos = orc.blocos || [];
+    const BSZ  = r(3.8);
+    const LH   = r(6);
+    const SHEAD = r(11);
+    const SGAP  = r(8);
+    const MX    = r(10);
+    const MW    = W - r(20);
+    const CHKSZ = r(3.5); // checkbox size
+    const FOOTER_Y = H - r(14);
+
+    blocos.forEach((bloco, bi) => {
+      const items = (bloco.itens || []).filter(s => s.trim());
+      if (!bloco.titulo && !items.length) return;
+      if (cy > FOOTER_Y - r(10)) return;
+
+      // Section title — bold, underline
+      ctx.font      = `bold ${r(4.5)}px sans-serif`;
+      ctx.fillStyle = '#000000';
+      ctx.textAlign = 'left';
+      ctx.fillText((bloco.titulo || 'Sem título').toUpperCase(), MX, cy + r(5));
+      // underline
+      const tw = ctx.measureText((bloco.titulo || 'Sem título').toUpperCase()).width;
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth   = r(0.4);
+      ctx.beginPath();
+      ctx.moveTo(MX, cy + r(6.5));
+      ctx.lineTo(MX + tw, cy + r(6.5));
+      ctx.stroke();
+      cy += SHEAD;
+
+      // Items as checklist
+      items.forEach(item => {
+        if (cy > FOOTER_Y - r(5)) return;
+
+        // Checkbox square
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth   = r(0.5);
+        ctx.strokeRect(MX, cy + r(0.5), CHKSZ, CHKSZ);
+
+        // Item text with word wrap
+        ctx.font      = `${BSZ}px sans-serif`;
+        ctx.fillStyle = '#000000';
+        const words = item.split(' ');
+        let line = '', lineY = cy;
+        const maxW = MW - CHKSZ - r(4);
+        words.forEach(word => {
+          const test = line ? line + ' ' + word : word;
+          if (ctx.measureText(test).width > maxW && line) {
+            ctx.fillText(line, MX + CHKSZ + r(3), lineY + BSZ * 0.85);
+            lineY += LH;
+            line = word;
+          } else line = test;
+        });
+        if (line) ctx.fillText(line, MX + CHKSZ + r(3), lineY + BSZ * 0.85);
+        cy = lineY + LH + r(1.5);
+      });
+      if (bi < blocos.length - 1) cy += SGAP;
+    });
+
+    // ── FOOTER — just a thin line + timestamp ─────────────────────────────
+    ctx.strokeStyle = '#CCCCCC';
+    ctx.lineWidth   = r(0.3);
+    ctx.beginPath();
+    ctx.moveTo(r(10), FOOTER_Y);
+    ctx.lineTo(W - r(10), FOOTER_Y);
+    ctx.stroke();
+
+    ctx.font      = `${r(2.5)}px sans-serif`;
+    ctx.fillStyle = '#999999';
+    ctx.textAlign = 'center';
+    ctx.fillText(
+      `Impresso em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}  ·  Perfeita Sala`,
+      W/2, FOOTER_Y + r(6));
+
+    // ── Export ────────────────────────────────────────────────────────────
+    const imgData  = cv.toDataURL('image/jpeg', 0.97);
+    const pdfBytes = buildMinimalPDF([imgData], W, H);
+    const blob     = new Blob([pdfBytes], { type: 'application/pdf' });
+    const url      = URL.createObjectURL(blob);
+    const a        = document.createElement('a');
+    a.href         = url;
+    const nome     = (orc.cliente || 'cozinha').replace(/\s+/g,'_').replace(/[^\w_]/g,'') || 'cozinha';
+    a.download     = nome + '_cozinha.pdf';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    showToast('PDF Cozinha gerado ✓');
+
+  } catch(e) {
+    console.error(e);
+    alert('Erro ao gerar PDF Cozinha: ' + e.message);
+  } finally {
+    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg> PDF COZINHA';
+    btn.disabled = false;
+  }
+}
 </script>
 
+
+<!-- ── Eventos Modal ─────────────────────────────────────────────── -->
+<div class="ev-overlay" id="evOverlay" onclick="if(event.target===this)fecharEventos()">
+  <div class="ev-modal">
+    <button class="ev-close" onclick="fecharEventos()">×</button>
+    <div class="ev-header">
+      <div class="ev-title">Eventos</div>
+
+      <!-- Status chips -->
+      <div class="ev-filters" id="evStatusFilters">
+        <button class="sf-chip sf-todos active" onclick="setEvFiltroStatus('')">Todos</button>
+        <button class="sf-chip sf-proposta"     onclick="setEvFiltroStatus('proposta')">Proposta</button>
+        <button class="sf-chip sf-confirmado"   onclick="setEvFiltroStatus('confirmado')">Confirmado</button>
+        <button class="sf-chip sf-executado"    onclick="setEvFiltroStatus('executado')">Executado</button>
+        <button class="sf-chip sf-cancelado"    onclick="setEvFiltroStatus('cancelado')">Cancelado</button>
+        <button class="sf-chip sf-apagado"      onclick="setEvFiltroStatus('apagado')">Apagado</button>
+      </div>
+
+      <!-- Text search -->
+      <div style="margin-bottom:10px;">
+        <div class="sidebar-filter-wrap" style="background:#1e0c06;border:1.5px solid #3a1f14;border-radius:8px;padding:6px 10px;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a07060" stroke-width="2.5">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input type="text" id="evTextFilter" placeholder="Buscar em qualquer campo..."
+                 oninput="renderEventos()"
+                 style="background:transparent;border:none;outline:none;color:var(--cream);font-family:'Poppins',sans-serif;font-size:12px;width:100%;margin-left:6px;">
+        </div>
+      </div>
+
+      <!-- Date range filter -->
+      <div class="ev-date-filter">
+        <label>De</label>
+        <input type="date" id="evDataIni" onchange="renderEventos()">
+        <label>até</label>
+        <input type="date" id="evDataFim" onchange="renderEventos()">
+        <button class="btn-cancelar-modal" onclick="limparDatasEv()" style="margin-left:4px;">limpar</button>
+      </div>
+    </div>
+
+    <div class="ev-table-wrap">
+      <table class="ev-table">
+        <thead>
+          <tr>
+            <th onclick="sortEventos('data')"    id="evSortData">Data</th>
+            <th onclick="sortEventos('hora')"    id="evSortHora">Hora</th>
+            <th onclick="sortEventos('evento')"  id="evSortEvento">Evento</th>
+            <th onclick="sortEventos('cliente')" id="evSortCliente">Cliente</th>
+            <th onclick="sortEventos('pax')"     id="evSortPax" style="text-align:center">Convidados</th>
+            <th onclick="sortEventos('status')"  id="evSortStatus">Status</th>
+            <th onclick="sortEventos('valor')"   id="evSortValor" style="text-align:right">Valor Final</th>
+          </tr>
+        </thead>
+        <tbody id="evTableBody"></tbody>
+      </table>
+    </div>
+    <div id="evEmpty" class="ev-empty" style="display:none">Nenhum evento encontrado.</div>
+    <button class="ev-btn-fechar" onclick="fecharEventos()">Fechar</button>
+  </div>
+</div>
+
+<!-- ── Gráficos Modal ────────────────────────────────────────────── -->
+<div class="graf-overlay" id="grafOverlay" onclick="if(event.target===this)fecharGraficos()">
+  <div class="graf-modal">
+    <button class="graf-close" onclick="fecharGraficos()">×</button>
+    <div class="graf-title">Gráficos</div>
+
+    <!-- Filters -->
+    <div class="graf-filters">
+      <div class="ev-date-filter">
+        <label>De</label>
+        <input type="date" id="grafDataIni" onchange="renderGraficos()">
+        <label>até</label>
+        <input type="date" id="grafDataFim" onchange="renderGraficos()">
+        <button class="btn-cancelar-modal" onclick="limparDatasGraf()" style="margin-left:4px;">limpar</button>
+      </div>
+    </div>
+    <div class="graf-filters" id="grafStatusFilters" style="margin-bottom:20px;">
+      <button class="sf-chip sf-todos active" onclick="setGrafFiltroStatus('')">Todos</button>
+      <button class="sf-chip sf-proposta"     onclick="setGrafFiltroStatus('proposta')">Proposta</button>
+      <button class="sf-chip sf-confirmado"   onclick="setGrafFiltroStatus('confirmado')">Confirmado</button>
+      <button class="sf-chip sf-executado"    onclick="setGrafFiltroStatus('executado')">Executado</button>
+      <button class="sf-chip sf-cancelado"    onclick="setGrafFiltroStatus('cancelado')">Cancelado</button>
+      <button class="sf-chip sf-apagado"      onclick="setGrafFiltroStatus('apagado')">Apagado</button>
+    </div>
+
+    <!-- Chart 1: Events per month -->
+    <div class="graf-chart-wrap">
+      <div class="graf-chart-title">Quantidade de Eventos por Mês</div>
+      <canvas id="grafCanvas1" class="graf-chart-canvas" height="200"></canvas>
+    </div>
+
+    <!-- Chart 2: Revenue per month -->
+    <div class="graf-chart-wrap">
+      <div class="graf-chart-title">Receita Total por Mês (R$)</div>
+      <canvas id="grafCanvas2" class="graf-chart-canvas" height="200"></canvas>
+    </div>
+
+    <!-- Chart 3: Guests per month -->
+    <div class="graf-chart-wrap">
+      <div class="graf-chart-title">Total de Convidados por Mês</div>
+      <canvas id="grafCanvas3" class="graf-chart-canvas" height="200"></canvas>
+    </div>
+
+    <button class="graf-btn-fechar" onclick="fecharGraficos()">Fechar</button>
+  </div>
+</div>
 
 <!-- ── Calendar Modal ────────────────────────────────────────────── -->
 <div class="cal-overlay" id="calOverlay" onclick="if(event.target===this)fecharCalendario()">
