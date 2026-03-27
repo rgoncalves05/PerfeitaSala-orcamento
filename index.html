@@ -1890,12 +1890,14 @@ function fecharConfig() { /* removed */ }
 async function salvarConfig() { /* removed */ }
 
 // ── Sheets API calls ───────────────────────────────────────────────────────
-async function sheetsRequest(params) {
+async function sheetsRequest(params, retry) {
   const cfg = getCfg();
   if (!cfg.url) return null;
   try {
-    // Get Firebase ID Token — proves user is authenticated
-    const token = window._fbGetToken ? await window._fbGetToken() : null;
+    // Force refresh token to get a fresh one (avoids 1h expiry issue)
+    const token = window._fbAuth?.currentUser
+      ? await window._fbAuth.currentUser.getIdToken(true)  // true = force refresh
+      : null;
     if (!token) {
       setSyncStatus('error', 'Não autenticado');
       return null;
@@ -1904,9 +1906,9 @@ async function sheetsRequest(params) {
     const res = await fetch(cfg.url + '?' + qs);
     const json = await res.json();
     if (json.error) {
-      if (json.error.includes('401') || json.error.includes('Token')) {
-        setSyncStatus('error', 'Sessão expirada — faça login novamente');
-        window._fbSignOut && window._fbSignOut();
+      if ((json.error.includes('401') || json.error.includes('Token')) && !retry) {
+        // Token truly invalid — retry once with fresh token
+        return sheetsRequest(params, true);
       }
       throw new Error(json.error);
     }
