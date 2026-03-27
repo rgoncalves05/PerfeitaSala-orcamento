@@ -2406,21 +2406,22 @@ function carregarOrcamento(id) {
 
   document.getElementById('cliente').value       = orc.cliente || '';
   originalCliente = orc.cliente || '';
-  document.getElementById('dataEvento').value    = orc.dataEvento || '';
+  document.getElementById('dataEvento').value    = (orc.dataEvento || '').split('T')[0];
   document.getElementById('horario').value       = horarioToDisplay(orc.horario);
-  document.getElementById('duracao').value       = orc.duracao || 3;
-  document.getElementById('pax').value           = orc.pax || 25;
+  document.getElementById('duracao').value       = +orc.duracao || 3;
+  document.getElementById('pax').value           = +orc.pax || 25;
   document.getElementById('tipoEvento').value    = orc.tipoEvento || '';
 
   // Pricing
-  document.getElementById('temDesconto').checked = orc.temDesconto !== false;
-  document.getElementById('locacaoOrig').value   = orc.locacaoOrig || 5000;
-  document.getElementById('locacaoDesc').value   = orc.locacaoDesc || 3500;
-  document.getElementById('buffetPP').value      = orc.buffetPP || 360;
-  document.getElementById('numGarcons').value    = orc.numGarcons ?? 2;
-  document.getElementById('numBarman').value     = orc.numBarman ?? 1;
-  document.getElementById('servico').value       = orc.servico || 1500;
-  document.getElementById('impostosPct').value   = orc.impostosPct ?? 12;
+  const temDesc = orc.temDesconto === true || String(orc.temDesconto).toUpperCase() === 'TRUE';
+  document.getElementById('temDesconto').checked = temDesc;
+  document.getElementById('locacaoOrig').value   = +orc.locacaoOrig || 5000;
+  document.getElementById('locacaoDesc').value   = +orc.locacaoDesc || 3500;
+  document.getElementById('buffetPP').value      = +orc.buffetPP || 360;
+  document.getElementById('numGarcons').value    = +orc.numGarcons ?? 2;
+  document.getElementById('numBarman').value     = +orc.numBarman ?? 1;
+  document.getElementById('servico').value       = +orc.servico || 1500;
+  document.getElementById('impostosPct').value   = +orc.impostosPct ?? 12;
   document.getElementById('incluso').value       = orc.incluso || '';
   document.getElementById('naoIncluso').value    = orc.naoIncluso || '';
   currentStatus = orc.status || 'proposta';
