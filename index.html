@@ -804,7 +804,22 @@ body {
   color: #8a5a40;
   margin-bottom: 4px;
   line-height: 1;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
+.cal-day-add {
+  font-size: 13px;
+  line-height: 1;
+  color: #5a3020;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s;
+  font-weight: 700;
+}
+.cal-day-add:hover { color: var(--coral); }
 .cal-day.today .cal-day-num {
   color: var(--coral);
   font-size: 13px;
@@ -1556,6 +1571,23 @@ body {
 }
 .total-final .lbl { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--cream); }
 .total-final .val { font-family: 'Poppins', sans-serif; font-size: 11px; font-weight: 700; }
+.btn-salvar-rodape {
+  padding: 10px 24px;
+  background: transparent;
+  color: var(--coral-deep);
+  border: 1.5px solid var(--coral);
+  border-radius: 8px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+.btn-salvar-rodape:hover { background: var(--coral); color: white; }
 
 /* ── Toast ── */
 .toast {
@@ -1724,7 +1756,8 @@ body {
         </div>
         <div class="event-field">
           <label>Data</label>
-          <input type="date" id="dataEvento" oninput="autoSave()">
+          <input type="text" id="dataEvento" placeholder="DD/MM/AAAA" maxlength="10"
+                 oninput="mascaraData(this)" onblur="normalizarData(this)">
         </div>
         <div class="event-field" style="position:relative;">
           <label>Horário</label>
@@ -1898,6 +1931,12 @@ body {
               <span class="lbl">Total do Evento</span>
               <span class="val" id="tTotal">R$ 0,00</span>
             </div>
+          </div>
+          <div style="display:flex; justify-content:center; margin-top:14px;">
+            <button class="btn-salvar-rodape" onclick="salvarOrcamento()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              Salvar
+            </button>
           </div>
 
         </div><!-- /col-right -->
@@ -2136,13 +2175,18 @@ function escHtml(s) {
 
 // ── CRUD ──────────────────────────────────────────────────────────────────
 function novoOrcamento() {
+  novoOrcamentoNaData('');
+}
+
+function novoOrcamentoNaData(data) {
+  fecharCalendario();
   const id = 'orc_' + Date.now();
   const agora = new Date().toISOString().split('T')[0];
   const orc = {
     id,
     nome: '',
     cliente: '',
-    dataEvento: '',
+    dataEvento: data || '',
     horario: '',
     duracao: '',
     pax: '',
@@ -2180,9 +2224,14 @@ function horaParaMinutos(h) {
 function detectarSobreposicao(orc, lista) {
   if (!orc.dataEvento || !orc.horario || !orc.duracao) return [];
   const dataOrc  = orc.dataEvento.split('T')[0];
-  const inicioA  = horaParaMinutos(orc.horario);
-  if (inicioA === null) return [];
-  const fimA     = inicioA + Math.round((orc.duracao || 3) * 60);
+  const horaAstr = horarioToDisplay(orc.horario);
+  if (!horaAstr) return [];
+  const [hhA, mmA] = horaAstr.split(':').map(Number);
+  if (isNaN(hhA)) return [];
+  const inicioA = hhA * 60 + (mmA || 0);
+  // fim A inclui tempo de limpeza do próprio evento
+  const limpezaA = Number(orc.tempoLimpeza) || 0;
+  const fimA    = inicioA + Math.round((orc.duracao + limpezaA) * 60);
   const conflitos = [];
   lista.forEach(o => {
     if (o.id === orc.id) return;
@@ -2191,10 +2240,14 @@ function detectarSobreposicao(orc, lista) {
     if (st === 'apagado' || st === 'cancelado') return;
     const dataO = o.dataEvento.split('T')[0];
     if (dataO !== dataOrc) return;
-    const inicioB = horaParaMinutos(o.horario);
-    if (inicioB === null) return;
-    const fimB = inicioB + Math.round((o.duracao || 3) * 60);
-    // Check overlap: A starts before B ends AND A ends after B starts
+    const horaBstr = horarioToDisplay(o.horario);
+    if (!horaBstr) return;
+    const [hhB, mmB] = horaBstr.split(':').map(Number);
+    if (isNaN(hhB)) return;
+    const inicioB  = hhB * 60 + (mmB || 0);
+    // fim B inclui tempo de limpeza do evento B
+    const limpezaB = Number(o.tempoLimpeza) || 0;
+    const fimB     = inicioB + Math.round((o.duracao + limpezaB) * 60);
     if (inicioA < fimB && fimA > inicioB) {
       conflitos.push(o);
     }
@@ -2213,7 +2266,7 @@ function salvarOrcamento(forcar) {
     const conflitos = detectarSobreposicao(orc, lista);
     if (conflitos.length > 0) {
       const nomes = conflitos.map(c =>
-        `• ${c.cliente || c.nome || 'Sem nome'} (${c.horario ? c.horario.toString().slice(0,5).replace(':','h') : '?'}, ${c.duracao || 3}h)`
+        `• ${c.cliente || c.nome || 'Sem nome'} (${horarioToDisplay(c.horario) || '?'}, ${c.duracao || 3}h)`
       ).join('\n');
       const msg = `⚠️ Sobreposição de horário detectada!\n\nEste evento conflita com:\n${nomes}\n\nDeseja salvar mesmo assim?`;
       if (!confirm(msg)) return;
@@ -2349,6 +2402,21 @@ document.addEventListener('click', e => {
     fecharHorarioDropdown();
   }
 });
+
+function mascaraData(el) {
+  let v = el.value.replace(/\D/g, '').slice(0, 8);
+  if (v.length > 4) v = v.slice(0,2) + '/' + v.slice(2,4) + '/' + v.slice(4);
+  else if (v.length > 2) v = v.slice(0,2) + '/' + v.slice(2);
+  el.value = v;
+  autoSave();
+}
+function normalizarData(el) {
+  const p = el.value.split('/');
+  if (p.length !== 3 || p[2].length !== 4) return;
+  // valida dia/mes minimamente
+  const d = parseInt(p[0]), m = parseInt(p[1]), y = parseInt(p[2]);
+  if (d < 1 || d > 31 || m < 1 || m > 12 || y < 2000) el.value = '';
+}
 
 function mascaraHorario(el) {
   let v = el.value.replace(/[^0-9hH:]/g, '');
@@ -2513,7 +2581,8 @@ function carregarOrcamento(id) {
 
   document.getElementById('cliente').value       = orc.cliente || '';
   originalCliente = orc.cliente || '';
-  document.getElementById('dataEvento').value    = (orc.dataEvento || '').split('T')[0];
+  const rawData = (orc.dataEvento || '').split('T')[0];
+  document.getElementById('dataEvento').value = rawData ? rawData.split('-').reverse().join('/') : '';
   document.getElementById('horario').value       = horarioToDisplay(orc.horario);
   document.getElementById('duracao').value       = orc.duracao !== '' && orc.duracao != null ? +orc.duracao : '';
   document.getElementById('pax').value           = orc.pax !== '' && orc.pax != null ? +orc.pax : '';
@@ -2549,7 +2618,7 @@ function coletarDados() {
     id: currentId,
     nome: '',
     cliente:     document.getElementById('cliente').value,
-    dataEvento:  document.getElementById('dataEvento').value,
+    dataEvento:  (function(){ const v = document.getElementById('dataEvento').value.trim(); const p = v.split('/'); return (p.length===3 && p[2].length===4) ? p[2]+'-'+p[1]+'-'+p[0] : v; })(),
     horario:     document.getElementById('horario').value,
     duracao:     +document.getElementById('duracao').value || 3,
     pax:         +document.getElementById('pax').value,
@@ -2722,14 +2791,17 @@ function fecharCatTipo() {
   document.getElementById('catTipoOverlay').classList.remove('open');
 }
 function aplicarTipoEvento(t) {
-  // Preenche o campo de texto do evento
   document.getElementById('tipoEvento').value = t.tipo;
-
-  // Preenche os campos de investimento — só se o valor existir na planilha
   if (t.locacao  !== '') document.getElementById('locacaoOrig').value = t.locacao;
   if (t.buffetPP !== '') document.getElementById('buffetPP').value    = t.buffetPP;
   if (t.imposto  !== '') document.getElementById('impostosPct').value = t.imposto;
   if (t.incluso  !== '') document.getElementById('incluso').value     = t.incluso;
+
+  // Guarda tempo de limpeza no orçamento atual
+  const lista = listar();
+  const idx   = lista.findIndex(o => o.id === currentId);
+  if (idx !== -1) lista[idx].tempoLimpeza = t.tempoLimpeza || 0;
+  salvarLista(lista);
 
   calcTotal();
   autoSave();
@@ -4096,13 +4168,13 @@ function renderCalendario() {
     const evHtml = sortedEvents.map(o => {
       const st   = o.status || 'proposta';
       const col  = statusColors[st] || '#888';
-      const hora = o.horario ? o.horario.toString().slice(0,5).replace(':','h') : '';
-      const dur  = o.duracao ? o.duracao + 'h' : '';
+      const horaLocal = o.horario ? horarioToDisplay(o.horario) : ''; // "HH:MM" local
+      const hora = horaLocal ? horaLocal.replace(':','h') : '';
       const pax  = o.pax ? o.pax + ' pax' : '';
-      const horaFim = (o.horario && o.duracao) ? (() => {
-        const m = horaParaMinutos(o.horario);
-        if (m === null) return '';
-        const fim = m + Math.round(o.duracao * 60);
+      const horaFim = (horaLocal && o.duracao) ? (() => {
+        const [hh, mm] = horaLocal.split(':').map(Number);
+        if (isNaN(hh)) return '';
+        const fim = hh * 60 + (mm || 0) + Math.round(o.duracao * 60);
         return String(Math.floor(fim/60) % 24).padStart(2,'0') + 'h' + String(fim%60).padStart(2,'0');
       })() : '';
       const horaDur = hora ? (horaFim ? `${hora}–${horaFim}` : hora) : '';
@@ -4115,7 +4187,7 @@ function renderCalendario() {
     }).join('');
 
     html += `<div class="cal-day${isToday ? ' today' : ''}">
-      <div class="cal-day-num">${day}</div>
+      <div class="cal-day-num">${day}<button class="cal-day-add" onclick="novoOrcamentoNaData('${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}')" title="Novo evento neste dia">+</button></div>
       ${evHtml}
     </div>`;
   }
