@@ -2035,6 +2035,7 @@ const APP_VERSION = '1.0.0';  // ← atualize aqui a cada deploy
 
 // ── State ──────────────────────────────────────────────────────────────────
 let currentId       = null;
+let currentClienteId = null;  // id do cliente vinculado ao orçamento
 let autoSaveTimer   = null;
 let currentStatus   = 'proposta';
 let _sinalEditado   = false;  // true quando usuário editou o sinal manualmente
@@ -2618,8 +2619,9 @@ function duplicarOrcamento() {
   const lista = listar();
   lista.unshift(copia);
   salvarLista(lista);
-  currentId     = novoId;
-  currentStatus = 'proposta';
+  currentId       = novoId;
+  currentStatus   = 'proposta';
+  currentClienteId = null;
   // Load the copy into the editor
   document.getElementById('cliente').value = copia.cliente;
   renderStatusBadge();
@@ -2745,7 +2747,8 @@ function carregarOrcamento(id) {
   document.getElementById('impostosPct').value   = orc.impostosPct !== '' && orc.impostosPct != null ? +orc.impostosPct : '';
   document.getElementById('incluso').value       = orc.incluso || '';
   document.getElementById('naoIncluso').value    = orc.naoIncluso || '';
-  currentStatus = orc.status || 'proposta';
+  currentStatus    = orc.status    || 'proposta';
+  currentClienteId = orc.clienteId || null;
   _sinalEditado = false;
   _excedenteEditado = false;
 
@@ -2808,6 +2811,7 @@ function coletarDados() {
     valorHoraExtra: getBRL('valorHoraExtra'),
     custoRolha: getBRL('custoRolha'),
     status:      currentStatus,
+    clienteId:   currentClienteId || '',
   };
 }
 
@@ -3935,9 +3939,17 @@ function abrirModalContrato() {
   }
   _clienteEditandoId = null;
   const orc = coletarDados();
-  // Tenta pré-selecionar cliente pelo nome do orçamento
-  const match = catalogoClientes.find(c => c.nome && orc.cliente &&
-    c.nome.toLowerCase() === orc.cliente.toLowerCase());
+  // Pré-selecionar cliente: 1º por clienteId vinculado, 2º por nome
+  const matchId   = currentClienteId
+    ? catalogoClientes.find(c => c.id === currentClienteId)
+    : null;
+  const nomeBusca = (orc.cliente || '').toLowerCase().trim();
+  const matchNome = !matchId && nomeBusca ? (
+    catalogoClientes.find(c => c.nome && c.nome.toLowerCase().trim() === nomeBusca) ||
+    catalogoClientes.find(c => c.nome && c.nome.toLowerCase().trim().includes(nomeBusca)) ||
+    catalogoClientes.find(c => c.nome && nomeBusca.includes(c.nome.toLowerCase().trim()))
+  ) : null;
+  const match = matchId || matchNome;
   if (match) preencherFormCliente(match);
   else {
     limparFormCliente();
@@ -4061,6 +4073,11 @@ async function salvarClienteModal() {
       const idx = catalogoClientes.findIndex(c => c.id === cli.id);
       if (idx >= 0) catalogoClientes[idx] = cli;
       else catalogoClientes.push(cli);
+      // Vincular cliente ao orçamento atual
+      if (currentId) {
+        currentClienteId = cli.id;
+        salvarOrcamento(true); // persiste o vínculo
+      }
       showToast('Cliente salvo ✓');
     }
   } catch(e) { showErro('Erro ao salvar cliente'); }
@@ -4426,23 +4443,83 @@ async function renderContrato(orc, cli) {
   c2.fillText(cli.nome, col2X, assinY + r(5));
   if (cli.doc) { c2.fillStyle = '#555'; c2.font = fT; c2.fillText(cli.doc, col2X, assinY + r(9)); }
 
-  // ── Canvas único: criar canvas final com altura exata ───────────────────────
-  // assinY + r(9) é a última linha desenhada (doc do cliente)
-  const finalH = assinY + r(20); // último elemento + margem inferior
-  const cvFinal = document.createElement('canvas');
-  cvFinal.width = W; cvFinal.height = finalH;
-  const cFinal = cvFinal.getContext('2d');
-  cFinal.fillStyle = '#FFFFFF'; cFinal.fillRect(0, 0, W, finalH);
-  // Copiar conteúdo do canvas de medição para o canvas final
-  cFinal.drawImage(cvMeasure, 0, 0);
+  // ── Paginação inteligente — corta apenas entre blocos ──────────────────────
+  const finalH  = assinY + r(20);
+  const pageH   = Math.round(11.69 * DPI);
+  const marginV = r(12);                    // margem topo e rodapé
+  const areaH   = pageH - marginV * 2;     // área útil por página
 
-  // PDF com página proporcional ao conteúdo (largura A4, altura variável)
-  const ptW = 595.28;
-  const ptH = ptW * (finalH / W); // proporcional
+  // Coletar posições Y de início de cada bloco seguro para corte.
+  // Usamos os "safe points" registrados durante a renderização.
+  // Como não temos instrumentação inline, reconstruímos calculando
+  // onde cada bloco começa medindo o canvas: varredura por linha branca.
+  // Abordagem: percorrer os pixels do canvas e identificar faixas de conteúdo,
+  // depois escolher cortes em faixas brancas (entre parágrafos).
 
-  // buildMinimalPDF com dimensões customizadas
-  const dataUrls = [cvFinal.toDataURL('image/jpeg', 0.92)];
-  const pdfBytes = buildMinimalPDF(dataUrls, W, finalH, ptW, ptH);
+  // Gerar lista de cortes seguros: y onde há ≥ 3px de branco contínuo
+  const imgData = cMeasure.getImageData(ML, 0, TW, finalH);
+  const px = imgData.data; // RGBA por pixel
+  const rowW = TW;
+
+  function isRowWhite(row) {
+    const base = row * rowW * 4;
+    for (let x = 0; x < rowW; x++) {
+      const i = base + x * 4;
+      // não-branco: qualquer canal < 240
+      if (px[i] < 240 || px[i+1] < 240 || px[i+2] < 240) return false;
+    }
+    return true;
+  }
+
+  // Encontrar faixas brancas (gaps entre blocos)
+  const gaps = []; // { start, end } em px do canvas
+  let inGap = false, gapStart = 0;
+  for (let row = 0; row < finalH; row++) {
+    const white = isRowWhite(row);
+    if (white && !inGap) { inGap = true; gapStart = row; }
+    else if (!white && inGap) { gaps.push({ start: gapStart, end: row - 1, mid: Math.round((gapStart + row - 1) / 2) }); inGap = false; }
+  }
+  if (inGap) gaps.push({ start: gapStart, end: finalH - 1, mid: Math.round((gapStart + finalH - 1) / 2) });
+
+  // Determinar cortes de página: para cada página, encontrar o último gap
+  // branco ANTES do limite — mesmo que seja entre linhas adjacentes
+  const cuts = [0];
+  let pageStart = 0;
+  while (pageStart < finalH) {
+    const pageEnd = pageStart + areaH;
+    if (pageEnd >= finalH) break; // última página
+
+    // Buscar o último gap com mid <= pageEnd (qualquer posição na página)
+    let bestCut = pageEnd; // fallback bruto
+    for (let g = gaps.length - 1; g >= 0; g--) {
+      if (gaps[g].mid <= pageEnd && gaps[g].mid > pageStart) {
+        bestCut = gaps[g].mid;
+        break;
+      }
+    }
+    cuts.push(bestCut);
+    pageStart = bestCut;
+  }
+  cuts.push(finalH);
+
+  // Gerar uma página por intervalo de corte
+  const dataUrls = [];
+  for (let p = 0; p < cuts.length - 1; p++) {
+    const srcY   = cuts[p];
+    const sliceH = cuts[p + 1] - cuts[p];
+
+    const cvPage = document.createElement('canvas');
+    cvPage.width  = W;
+    cvPage.height = pageH;
+    const cPage = cvPage.getContext('2d');
+    cPage.fillStyle = '#FFFFFF';
+    cPage.fillRect(0, 0, W, pageH);
+    cPage.drawImage(cvMeasure, 0, srcY, W, sliceH, 0, marginV, W, sliceH);
+    dataUrls.push(cvPage.toDataURL('image/jpeg', 0.92));
+  }
+
+  // PDF A4 padrão
+  const pdfBytes = buildMinimalPDF(dataUrls, W, pageH);
   const blob = new Blob([pdfBytes], { type: 'application/pdf' });
   const link = document.createElement('a');
   link.href  = URL.createObjectURL(blob);
