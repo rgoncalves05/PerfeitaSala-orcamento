@@ -2817,8 +2817,10 @@ function coletarDados() {
 
 // ── Blocos ─────────────────────────────────────────────────────────────────
 let blocoIdCounter = 0;
-let catalogoBlocos = [];   // carregado do Sheets na inicialização
-let catalogoTipos   = [];   // catálogo de tipos de evento
+let catalogoBlocos    = [];   // carregado do Sheets na inicialização
+let catalogoCategorias = []; // [{ nome, codigo }] — aba categoria-de-servico
+let catalogoItens      = []; // [{ item, codigos[] }] — aba item-X-categoria
+let catalogoTipos     = [];   // catálogo de tipos de evento
 let catalogoClientes = [];  // cadastro de clientes
 
 let _catalogoPromise = null;
@@ -2835,14 +2837,16 @@ function carregarCatalogo() {
       if (!token) return;
 
       // Carregar blocos e tipos em paralelo
-      const [resBlocos, resTipos, resClientes] = await Promise.all([
-        fetch(cfg.url + '?' + new URLSearchParams({ action: 'listBlocos',      token })).then(r => r.json()),
-        fetch(cfg.url + '?' + new URLSearchParams({ action: 'listTiposEvento', token })).then(r => r.json()),
-        fetch(cfg.url + '?' + new URLSearchParams({ action: 'listClientes',    token })).then(r => r.json())
+      const [resTipos, resClientes, resCategorias, resItens] = await Promise.all([
+        fetch(cfg.url + '?' + new URLSearchParams({ action: 'listTiposEvento',       token })).then(r => r.json()),
+        fetch(cfg.url + '?' + new URLSearchParams({ action: 'listClientes',          token })).then(r => r.json()),
+        fetch(cfg.url + '?' + new URLSearchParams({ action: 'listCategorias',        token })).then(r => r.json()),
+        fetch(cfg.url + '?' + new URLSearchParams({ action: 'listItensPorCategoria', token })).then(r => r.json()),
       ]);
-      if (resBlocos   && resBlocos.blocos)     catalogoBlocos   = resBlocos.blocos;
-      if (resTipos    && resTipos.tipos)        catalogoTipos    = resTipos.tipos;
-      if (resClientes && resClientes.clientes)  catalogoClientes = resClientes.clientes;
+      if (resTipos      && resTipos.tipos)            catalogoTipos      = resTipos.tipos;
+      if (resClientes   && resClientes.clientes)      catalogoClientes   = resClientes.clientes;
+      if (resCategorias && resCategorias.categorias)  catalogoCategorias = resCategorias.categorias;
+      if (resItens      && resItens.itens)            catalogoItens      = resItens.itens;
     } catch(e) {
       console.warn('Catálogo não carregado:', e);
     }
@@ -2859,16 +2863,19 @@ async function abrirCatBloco() {
   if (_catalogoPromise) await _catalogoPromise;
 
   list.innerHTML = '';
-  if (catalogoBlocos.length === 0) {
-    fecharCatBloco();
-    adicionarBlocoManual();
+  // Usar SOMENTE categorias da aba "categoria-de-servico" — sem fallback
+  if (catalogoCategorias.length === 0) {
+    list.innerHTML = '<p style="color:#c0392b;font-size:12px;padding:8px">Nenhuma categoria encontrada.<br>Verifique a aba "categoria-de-servico" no Sheets.</p>';
     return;
   }
-  catalogoBlocos.forEach(bloco => {
+  catalogoCategorias.forEach(cat => {
     const btn = document.createElement('button');
     btn.className = 'cat-item-btn';
-    btn.textContent = bloco.nome;
-    btn.onclick = () => { fecharCatBloco(); adicionarBlocoDocat(bloco); };
+    btn.textContent = cat.nome;
+    btn.onclick = () => {
+      fecharCatBloco();
+      adicionarBlocoDocat({ nome: cat.nome, codigo: cat.codigo, itens: [] });
+    };
     list.appendChild(btn);
   });
 }
@@ -2888,8 +2895,8 @@ function adicionarBlocoManual() {
 }
 function adicionarBlocoDocat(bloco) {
   const id = 'b_' + Date.now() + '_' + (blocoIdCounter++);
-  // Inicia com lista vazia — usuário escolherá os itens pelo modal
-  renderBloco({ id, titulo: bloco.nome, itens: [] });
+  // Guarda o codigo da categoria no data-categoria do bloco para filtrar itens
+  renderBloco({ id, titulo: bloco.nome, categoria: bloco.codigo || '', itens: [] });
   const container = document.getElementById('menuBlocks');
   const last = container.lastElementChild;
   if (last) last.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -2913,16 +2920,25 @@ async function abrirCatItem(bid) {
   // Aguarda carregamento se ainda em andamento
   if (_catalogoPromise) await _catalogoPromise;
 
-  const cat = catalogoBlocos.find(b => b.nome.toLowerCase() === titulo.toLowerCase());
+  // Obter código da categoria do bloco
+  const blocoDiv  = document.querySelector(`.menu-block[data-id="${bid}"]`);
+  const codCat    = blocoDiv ? (blocoDiv.dataset.categoria || '').trim() : '';
+
+  // Filtrar itens que incluem o código desta categoria
+  const itensFiltrados = codCat
+    ? catalogoItens.filter(i => i.codigos.includes(codCat))
+    : [];
+
   list.innerHTML = '';
 
-  if (!cat || cat.itens.length === 0) {
+  if (itensFiltrados.length === 0) {
+    // Sem itens cadastrados — ir direto para manual
     fecharCatItem();
     adicionarItemManual(bid);
     return;
   }
 
-  cat.itens.forEach(item => {
+  itensFiltrados.forEach(({ item }) => {
     const btn = document.createElement('button');
     btn.className = 'cat-item-btn';
     btn.textContent = item;
@@ -3000,6 +3016,7 @@ function renderBloco(b) {
   const div = document.createElement('div');
   div.className = 'menu-block';
   div.dataset.id = bid;
+  div.dataset.categoria = b.categoria || '';
   div.innerHTML = `
     <div class="menu-block-header">
       <span class="menu-block-drag" title="Arrastar">⠿</span>
@@ -3171,7 +3188,7 @@ function coletarBlocos() {
     div.querySelectorAll('.menu-item-text').forEach(ta => {
       if (ta.value.trim()) itens.push(ta.value.trim());
     });
-    blocks.push({ id: div.dataset.id, titulo, itens });
+    blocks.push({ id: div.dataset.id, titulo, categoria: div.dataset.categoria || '', itens });
   });
   return blocks;
 }
