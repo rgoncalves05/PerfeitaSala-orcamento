@@ -1571,6 +1571,56 @@ body {
 }
 .total-final .lbl { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--cream); }
 .total-final .val { font-family: 'Poppins', sans-serif; font-size: 11px; font-weight: 700; }
+.sinal-box {
+  border-top: 1px solid rgba(255,255,255,0.15);
+  margin-top: 10px;
+  padding-top: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.sinal-box .lbl {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--cream);
+  opacity: 0.8;
+  white-space: nowrap;
+}
+.sinal-input {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 6px;
+  color: white;
+  font-family: 'Poppins', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 8px;
+  width: 110px;
+  text-align: right;
+}
+.sinal-input:focus { outline: none; border-color: rgba(255,255,255,0.6); }
+.cli-search {
+  width: 100%; background: #2e1408; border: 1px solid #3a1f14;
+  border-radius: 6px; color: #f5e0c8; font-family: Poppins,sans-serif;
+  font-size: 12px; padding: 7px 10px; box-sizing: border-box;
+}
+.cli-lista {
+  max-height: 140px; overflow-y: auto; border: 1px solid #3a1f14;
+  border-radius: 6px; margin-top: 4px;
+}
+.cli-item {
+  padding: 8px 12px; cursor: pointer; font-size: 12px; color: #f5e0c8;
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid #2e1408;
+}
+.cli-item:hover { background: #3a1a08; }
+.cli-item-del {
+  background: none; border: none; color: #7a4030; cursor: pointer;
+  font-size: 14px; padding: 0 4px; line-height: 1;
+}
+.cli-item-del:hover { color: var(--coral); }
 .btn-salvar-rodape {
   padding: 10px 24px;
   background: transparent;
@@ -1607,6 +1657,7 @@ body {
   z-index: 999;
 }
 .toast.show { opacity: 1; transform: translateY(0); }
+.toast.erro { background: #c0392b; }
 
 /* ── Responsive ── */
 @media (max-width: 900px) {
@@ -1727,6 +1778,10 @@ body {
         <button class="btn-save" onclick="duplicarOrcamento()" title="Duplicar orçamento" style="background:transparent;border:1.5px solid #3a1f14;color:#c0906a;">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
           Duplicar
+        </button>
+        <button class="btn-pdf" id="btnContrato" onclick="abrirModalContrato()" style="background:#3a6a3a;border:1.5px solid #5a9a5a;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          CONTRATO
         </button>
         <button class="btn-pdf" id="btnPdfCliente" onclick="gerarPDF()">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
@@ -1931,6 +1986,26 @@ body {
               <span class="lbl">Total do Evento</span>
               <span class="val" id="tTotal">R$ 0,00</span>
             </div>
+            <div class="sinal-box">
+              <span class="lbl">Sinal p/ reserva</span>
+              <input type="text" class="sinal-input" id="sinalReserva" placeholder="R$ 0,00"
+                     oninput="_sinalEditado=true; mascaraBRL(this); autoSave()">
+            </div>
+            <div class="sinal-box">
+              <span class="lbl">Valor p/ convidado excedente</span>
+              <input type="text" class="sinal-input" id="valorExcedente" placeholder="R$ 0,00"
+                     oninput="_excedenteEditado=true; mascaraBRL(this); autoSave()">
+            </div>
+            <div class="sinal-box">
+              <span class="lbl">Hora extra por profissional</span>
+              <input type="text" class="sinal-input" id="valorHoraExtra" placeholder="R$ 0,00"
+                     oninput="mascaraBRL(this); autoSave()">
+            </div>
+            <div class="sinal-box">
+              <span class="lbl">Custo de rolha</span>
+              <input type="text" class="sinal-input" id="custoRolha" placeholder="R$ 0,00"
+                     oninput="mascaraBRL(this); autoSave()">
+            </div>
           </div>
           <div style="display:flex; justify-content:center; margin-top:14px;">
             <button class="btn-salvar-rodape" onclick="salvarOrcamento()">
@@ -1962,6 +2037,8 @@ const APP_VERSION = '1.0.0';  // ← atualize aqui a cada deploy
 let currentId       = null;
 let autoSaveTimer   = null;
 let currentStatus   = 'proposta';
+let _sinalEditado   = false;  // true quando usuário editou o sinal manualmente
+let _excedenteEditado = false; // true quando usuário editou o excedente manualmente
 let filtroStatusSet = new Set();  // empty = todos
 let originalCliente = null;
 
@@ -2257,8 +2334,51 @@ function detectarSobreposicao(orc, lista) {
 
 function salvarOrcamento(forcar) {
   if (!currentId) return;
-  const cfg   = getCfg();
-  const orc   = coletarDados();
+  const cfg = getCfg();
+  const orc = coletarDados();
+
+  // Validação de campos obrigatórios (apenas no salvar manual, não no auto-save)
+  if (forcar !== true) {
+    const campos = [
+      { id: 'cliente',    label: 'Cliente' },
+      { id: 'dataEvento', label: 'Data' },
+      { id: 'horario',    label: 'Horário' },
+      { id: 'duracao',    label: 'Duração', validate: v => +v > 0 || 'Duração deve ser maior que zero' },
+      { id: 'pax',        label: 'Convidados' },
+      { id: 'tipoEvento', label: 'Evento' },
+    ];
+    const vazios = campos.filter(c => {
+      const v = document.getElementById(c.id)?.value?.trim();
+      if (!v || v === '0') return true;
+      if (c.validate) {
+        const res = c.validate(v);
+        return res !== true;
+      }
+      return false;
+    }).map(c => {
+      const v = document.getElementById(c.id)?.value?.trim();
+      if (c.validate && v && v !== '0') {
+        const res = c.validate(v);
+        return res !== true ? res : c.label;
+      }
+      return c.label;
+    });
+    if (vazios.length > 0) {
+      showErro('Preencha: ' + vazios.join(', '));
+      // Destacar campos em erro
+      campos.forEach(c => {
+        const el = document.getElementById(c.id);
+        if (!el) return;
+        const vazio = !el.value?.trim() || el.value?.trim() === '0';
+        el.style.outline = vazio ? '2px solid #c0392b' : '';
+        if (vazio) el.addEventListener('input', function clear() {
+          el.style.outline = '';
+          el.removeEventListener('input', clear);
+        }, { once: true });
+      });
+      return;
+    }
+  }
 
   // Check for overlaps (skip if forcing after confirmation)
   if (!forcar && orc.dataEvento && orc.horario) {
@@ -2402,6 +2522,31 @@ document.addEventListener('click', e => {
     fecharHorarioDropdown();
   }
 });
+
+// ── Máscara BRL para campos de texto ─────────────────────────────────────
+function mascaraBRL(el) {
+  // Remove tudo exceto dígitos
+  let digits = el.value.replace(/\D/g, '');
+  if (!digits) { el.value = ''; return; }
+  // Interpreta como centavos
+  const cents = parseInt(digits, 10);
+  el.value = formatBRL(cents / 100);
+}
+function formatBRL(num) {
+  return 'R$ ' + Number(num).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function setBRL(id, num) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  // Só limpa se null, undefined ou string vazia — 0 é valor válido
+  el.value = (num != null && num !== '') ? formatBRL(Number(num)) : '';
+}
+function getBRL(id) {
+  const el = document.getElementById(id);
+  if (!el || !el.value) return 0;
+  // Remove "R$ ", pontos de milhar e troca vírgula por ponto
+  return parseFloat(el.value.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+}
 
 function mascaraData(el) {
   let v = el.value.replace(/\D/g, '').slice(0, 8);
@@ -2601,6 +2746,24 @@ function carregarOrcamento(id) {
   document.getElementById('incluso').value       = orc.incluso || '';
   document.getElementById('naoIncluso').value    = orc.naoIncluso || '';
   currentStatus = orc.status || 'proposta';
+  _sinalEditado = false;
+  _excedenteEditado = false;
+
+  // Sempre carregar — não usar "if (orc.x)" pois 0 é falsy e seria ignorado
+  if (orc.sinalReserva != null && orc.sinalReserva !== '') {
+    _sinalEditado = true;
+    setBRL('sinalReserva', orc.sinalReserva);
+  } else {
+    setBRL('sinalReserva', null);
+  }
+  if (orc.valorExcedente != null && orc.valorExcedente !== '') {
+    _excedenteEditado = true;
+    setBRL('valorExcedente', orc.valorExcedente);
+  } else {
+    setBRL('valorExcedente', null);
+  }
+  setBRL('valorHoraExtra', orc.valorHoraExtra != null && orc.valorHoraExtra !== '' ? orc.valorHoraExtra : 50);
+  setBRL('custoRolha',     orc.custoRolha     != null && orc.custoRolha     !== '' ? orc.custoRolha     : 70);
   renderStatusBadge();
 
   toggleDesconto();
@@ -2614,26 +2777,36 @@ function carregarOrcamento(id) {
 
 // ── Collect form data ─────────────────────────────────────────────────────
 function coletarDados() {
+  // ⚠️ NUNCA usar "|| ''" em campos numéricos — +0 || '' retorna '' e apaga o valor!
+  // Usar função auxiliar que preserva 0 e só retorna '' se o campo estiver vazio
+  function numCampo(id) {
+    const v = document.getElementById(id)?.value;
+    return (v === '' || v == null) ? '' : +v;
+  }
   return {
     id: currentId,
     nome: '',
     cliente:     document.getElementById('cliente').value,
     dataEvento:  (function(){ const v = document.getElementById('dataEvento').value.trim(); const p = v.split('/'); return (p.length===3 && p[2].length===4) ? p[2]+'-'+p[1]+'-'+p[0] : v; })(),
     horario:     document.getElementById('horario').value,
-    duracao:     +document.getElementById('duracao').value || 3,
-    pax:         +document.getElementById('pax').value,
+    duracao:     numCampo('duracao'),
+    pax:         numCampo('pax'),
     tipoEvento:  document.getElementById('tipoEvento').value,
     blocos:      coletarBlocos(),
-    locacaoOrig: +document.getElementById('locacaoOrig').value,
-    locacaoDesc: +document.getElementById('locacaoDesc').value,
+    locacaoOrig: numCampo('locacaoOrig'),
+    locacaoDesc: numCampo('locacaoDesc'),
     temDesconto: document.getElementById('temDesconto').checked,
-    buffetPP:    +document.getElementById('buffetPP').value,
-    numGarcons:  +document.getElementById('numGarcons').value,
-    numBarman:   +document.getElementById('numBarman').value,
-    servico:     +document.getElementById('servico').value,
-    impostosPct: +document.getElementById('impostosPct').value,
+    buffetPP:    numCampo('buffetPP'),
+    numGarcons:  numCampo('numGarcons'),
+    numBarman:   numCampo('numBarman'),
+    servico:     numCampo('servico'),
+    impostosPct: numCampo('impostosPct'),
     incluso:     document.getElementById('incluso').value,
     naoIncluso:  document.getElementById('naoIncluso').value,
+    sinalReserva: getBRL('sinalReserva'),
+    valorExcedente: getBRL('valorExcedente'),
+    valorHoraExtra: getBRL('valorHoraExtra'),
+    custoRolha: getBRL('custoRolha'),
     status:      currentStatus,
   };
 }
@@ -2641,7 +2814,8 @@ function coletarDados() {
 // ── Blocos ─────────────────────────────────────────────────────────────────
 let blocoIdCounter = 0;
 let catalogoBlocos = [];   // carregado do Sheets na inicialização
-let catalogoTipos  = [];   // catálogo de tipos de evento
+let catalogoTipos   = [];   // catálogo de tipos de evento
+let catalogoClientes = [];  // cadastro de clientes
 
 let _catalogoPromise = null;
 
@@ -2657,12 +2831,14 @@ function carregarCatalogo() {
       if (!token) return;
 
       // Carregar blocos e tipos em paralelo
-      const [resBlocos, resTipos] = await Promise.all([
-        fetch(cfg.url + '?' + new URLSearchParams({ action: 'listBlocos', token })).then(r => r.json()),
-        fetch(cfg.url + '?' + new URLSearchParams({ action: 'listTiposEvento', token })).then(r => r.json())
+      const [resBlocos, resTipos, resClientes] = await Promise.all([
+        fetch(cfg.url + '?' + new URLSearchParams({ action: 'listBlocos',      token })).then(r => r.json()),
+        fetch(cfg.url + '?' + new URLSearchParams({ action: 'listTiposEvento', token })).then(r => r.json()),
+        fetch(cfg.url + '?' + new URLSearchParams({ action: 'listClientes',    token })).then(r => r.json())
       ]);
-      if (resBlocos && resBlocos.blocos) catalogoBlocos = resBlocos.blocos;
-      if (resTipos  && resTipos.tipos)   catalogoTipos  = resTipos.tipos;
+      if (resBlocos   && resBlocos.blocos)     catalogoBlocos   = resBlocos.blocos;
+      if (resTipos    && resTipos.tipos)        catalogoTipos    = resTipos.tipos;
+      if (resClientes && resClientes.clientes)  catalogoClientes = resClientes.clientes;
     } catch(e) {
       console.warn('Catálogo não carregado:', e);
     }
@@ -3034,18 +3210,48 @@ function calcTotal() {
   document.getElementById('tServico').textContent  = fmtBRL(serv);
   document.getElementById('tImpostos').textContent = fmtBRL(imp);
   document.getElementById('tTotal').textContent    = fmtBRL(total);
+
+  // Preenche sinal com 50% do total — só se não foi editado manualmente
+  if (!_sinalEditado) setBRL('sinalReserva', total > 0 ? total * 0.5 : null);
+
+  // Preenche excedente = (buffet + serviço + impostos) / pax — só se não editado
+  if (!_excedenteEditado) setBRL('valorExcedente', (pax > 0 && (buffet + serv + imp) > 0) ? (buffet + serv + imp) / pax : null);
 }
 
 // ── Toast ──────────────────────────────────────────────────────────────────
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
+  t.classList.remove('erro');
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2200);
 }
+function showErro(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = '⚠️ ' + msg;
+  t.classList.add('erro', 'show');
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.classList.remove('erro'), 300); }, 3500);
+}
 
 // ── PDF generation ─────────────────────────────────────────────────────────
+function _validarDuracao() {
+  const dur = +document.getElementById('duracao').value;
+  if (!dur || dur <= 0) {
+    showErro('Informe a duração do evento (maior que zero)');
+    const el = document.getElementById('duracao');
+    el.style.outline = '2px solid #c0392b';
+    el.focus();
+    el.addEventListener('input', function clear() {
+      el.style.outline = '';
+      el.removeEventListener('input', clear);
+    }, { once: true });
+    return false;
+  }
+  return true;
+}
+
 async function gerarPDF() {
+  if (!_validarDuracao()) return;
   salvarOrcamento();
   const orc = coletarDados();
   const btn = document.getElementById('btnPdfCliente');
@@ -3401,6 +3607,36 @@ async function renderPDF(orc) {
   ctx.fillText(`${pax} pax · ${orc.tipoEvento||''} · ${fmtDate(orc.dataEvento)}`, C2X + r(3), iy + TOT_H - r(4));
   iy += TOT_H + r(2);
 
+  // Sinal e excedente
+  const sinal = Number(orc.sinalReserva) || 0;
+  const exc    = Number(orc.valorExcedente) || 0;
+  const hextra = Number(orc.valorHoraExtra) || 0;
+  const rolha  = Number(orc.custoRolha)     || 0;
+  if (sinal > 0 || exc > 0 || hextra > 0 || rolha > 0) {
+    const rowH = r(7);
+    const numRows = (sinal > 0 ? 1 : 0) + (exc > 0 ? 1 : 0) + (hextra > 0 ? 1 : 0) + (rolha > 0 ? 1 : 0);
+    ctx.fillStyle = '#2e1208';
+    ctx.fillRect(C2X, iy, CW, rowH * numRows + r(1));
+    ctx.textAlign = 'left';
+    let rowY = iy;
+    const drawRow = (label, val) => {
+      ctx.fillStyle = C.cream;
+      ctx.font = `bold ${r(2.5)}px sans-serif`;
+      ctx.fillText(label, C2X + r(3), rowY + r(4.5));
+      ctx.fillStyle = C.white;
+      ctx.font = `bold ${r(3)}px serif`;
+      ctx.textAlign = 'right';
+      ctx.fillText(fmtMoney(val), C2X + CW - r(3), rowY + r(4.5));
+      ctx.textAlign = 'left';
+      rowY += rowH;
+    };
+    if (sinal  > 0) drawRow('Sinal para confirmação da reserva:', sinal);
+    if (exc    > 0) drawRow('Valor por convidado excedente:', exc);
+    if (hextra > 0) drawRow('Hora extra por profissional:', hextra);
+    if (rolha  > 0) drawRow('Custo de rolha:', rolha);
+    iy = rowY + r(3);
+  }
+
   // Incluso strip
   const incH = r(7);
   ctx.fillStyle = C.coralDark || '#7A2020';
@@ -3485,7 +3721,7 @@ function mulberry32(seed) {
 }
 
 // ── Build minimal valid PDF with one JPEG page ────────────────────────────
-function buildMinimalPDF(dataUrls, pxW, pxH) {
+function buildMinimalPDF(dataUrls, pxW, pxH, customPtW, customPtH) {
   // Accept single URL or array
   if (!Array.isArray(dataUrls)) dataUrls = [dataUrls];
 
@@ -3499,8 +3735,8 @@ function buildMinimalPDF(dataUrls, pxW, pxH) {
   });
   const imgBytes = pages[0]; // keep for compat
 
-  // PDF page size in points (72 dpi): A4 = 595.28 x 841.89 pt
-  const ptW = 595.28, ptH = 841.89;
+  // PDF page size in points (72 dpi): A4 = 595.28 x 841.89 pt por padrão
+  const ptW = customPtW || 595.28, ptH = customPtH || 841.89;
 
   // Build PDF objects
   const enc = new TextEncoder();
@@ -3665,16 +3901,567 @@ initAuth();
 
 // Config modal removed
 
+// ── Contrato ────────────────────────────────────────────────────────────────
+let _clienteEditandoId = null; // id do cliente carregado no modal
+
+function abrirModalContrato() {
+  // Validar campos obrigatórios do cabeçalho antes de abrir
+  const camposHeader = [
+    { id: 'cliente',    label: 'Cliente' },
+    { id: 'dataEvento', label: 'Data do evento' },
+    { id: 'horario',    label: 'Horário' },
+    { id: 'duracao',    label: 'Duração' },
+    { id: 'pax',        label: 'Nº de convidados' },
+    { id: 'tipoEvento', label: 'Tipo de evento' },
+  ];
+  const faltando = camposHeader.filter(c => {
+    const v = document.getElementById(c.id)?.value?.trim();
+    return !v || v === '0';
+  });
+  if (faltando.length > 0) {
+    showErro('Preencha antes de gerar o contrato: ' + faltando.map(c => c.label).join(', '));
+    faltando.forEach(c => {
+      const el = document.getElementById(c.id);
+      if (!el) return;
+      el.style.outline = '2px solid #c0392b';
+      el.addEventListener('input', function clear() {
+        el.style.outline = '';
+        el.removeEventListener('input', clear);
+      }, { once: true });
+    });
+    // Focar no primeiro campo com problema
+    document.getElementById(faltando[0].id)?.focus();
+    return;
+  }
+  _clienteEditandoId = null;
+  const orc = coletarDados();
+  // Tenta pré-selecionar cliente pelo nome do orçamento
+  const match = catalogoClientes.find(c => c.nome && orc.cliente &&
+    c.nome.toLowerCase() === orc.cliente.toLowerCase());
+  if (match) preencherFormCliente(match);
+  else {
+    limparFormCliente();
+    if (orc.cliente) document.getElementById('ctr_nome').value = orc.cliente;
+  }
+  document.getElementById('ctr_lista').style.display = 'none';
+  document.getElementById('contratoOverlay').classList.add('open');
+}
+async function buscarCep(cep) {
+  const digits = cep.replace(/\D/g, '');
+  if (digits.length !== 8) return;
+  const status = document.getElementById('ctr_cep_status');
+  status.textContent = '🔍 buscando...';
+  try {
+    const res  = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
+    const data = await res.json();
+    if (data.erro) { status.textContent = '❌ CEP não encontrado'; return; }
+    document.getElementById('ctr_end').value    = data.logradouro || '';
+    document.getElementById('ctr_bairro').value = data.bairro     || '';
+    document.getElementById('ctr_cidade').value = (data.localidade || '') + (data.uf ? ' - ' + data.uf : '');
+    status.textContent = '✓';
+    setTimeout(() => { status.textContent = ''; }, 2000);
+    // Focar no campo número para o usuário completar
+    document.getElementById('ctr_num').focus();
+  } catch(e) {
+    status.textContent = '❌ Erro ao buscar';
+  }
+}
+
+function fecharModalContrato() {
+  document.getElementById('contratoOverlay').classList.remove('open');
+}
+function limparFormCliente() {
+  ['ctr_nome','ctr_doc','ctr_end','ctr_num','ctr_complemento','ctr_bairro','ctr_cep','ctr_email'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('ctr_cidade').value = 'São Paulo - SP';
+  _clienteEditandoId = null;
+}
+function preencherFormCliente(cli) {
+  document.getElementById('ctr_nome').value   = cli.nome   || '';
+  document.getElementById('ctr_doc').value    = cli.doc    || '';
+  document.getElementById('ctr_end').value         = cli.end         || '';
+  document.getElementById('ctr_num').value         = cli.num         || '';
+  document.getElementById('ctr_complemento').value = cli.complemento || '';
+  document.getElementById('ctr_bairro').value      = cli.bairro      || '';
+  document.getElementById('ctr_cep').value         = cli.cep         || '';
+  document.getElementById('ctr_cidade').value      = cli.cidade      || 'São Paulo - SP';
+  document.getElementById('ctr_email').value       = cli.email       || '';
+  _clienteEditandoId = cli.id || null;
+}
+function filtrarClientes(q) {
+  const lista = document.getElementById('ctr_lista');
+  if (!q || q.length < 2) { lista.style.display = 'none'; return; }
+  const termo = q.toLowerCase();
+  const matches = catalogoClientes.filter(c =>
+    (c.nome  || '').toLowerCase().includes(termo) ||
+    (c.doc   || '').toLowerCase().includes(termo) ||
+    (c.email || '').toLowerCase().includes(termo)
+  ).slice(0, 8);
+  if (!matches.length) { lista.style.display = 'none'; return; }
+  lista.innerHTML = matches.map(c => `
+    <div class="cli-item">
+      <span onclick="preencherFormCliente(${JSON.stringify(c).replace(/"/g,'&quot;')}); document.getElementById('ctr_lista').style.display='none'; document.getElementById('ctr_busca').value='';" style="flex:1;">
+        <strong>${escHtml(c.nome)}</strong>${c.doc ? ' — ' + escHtml(c.doc) : ''}
+        ${c.email ? '<br><span style="font-size:10px;color:#9a6050">' + escHtml(c.email) + '</span>' : ''}
+      </span>
+      <button class="cli-item-del" onclick="excluirCliente('${c.id}', event)" title="Remover cliente">×</button>
+    </div>`).join('');
+  lista.style.display = 'block';
+}
+function _validarCamposCliente() {
+  const campos = [
+    { id: 'ctr_nome',   msg: 'Informe o nome do cliente' },
+    { id: 'ctr_doc',    msg: 'Informe o CPF ou CNPJ'     },
+    { id: 'ctr_cep',    msg: 'Informe o CEP'             },
+    { id: 'ctr_end',    msg: 'Informe o logradouro'      },
+    { id: 'ctr_num',    msg: 'Informe o número'          },
+    { id: 'ctr_bairro', msg: 'Informe o bairro'          },
+    { id: 'ctr_cidade', msg: 'Informe a cidade'          },
+    { id: 'ctr_email',  msg: 'Informe o e-mail'          },
+    // ctr_complemento é opcional — não incluído
+  ];
+  for (const c of campos) {
+    const el = document.getElementById(c.id);
+    if (!el || !el.value.trim()) {
+      showErro(c.msg);
+      if (el) {
+        el.style.outline = '2px solid #c0392b';
+        el.focus();
+        el.addEventListener('input', function clear() {
+          el.style.outline = '';
+          el.removeEventListener('input', clear);
+        }, { once: true });
+      }
+      return false;
+    }
+  }
+  return true;
+}
+
+async function salvarClienteModal() {
+  if (!_validarCamposCliente()) return;
+  const cli = {
+    id:          _clienteEditandoId || '',
+    nome:        document.getElementById('ctr_nome').value.trim(),
+    doc:         document.getElementById('ctr_doc').value.trim(),
+    end:         document.getElementById('ctr_end').value.trim(),
+    num:         document.getElementById('ctr_num').value.trim(),
+    complemento: document.getElementById('ctr_complemento').value.trim(),
+    bairro:      document.getElementById('ctr_bairro').value.trim(),
+    cep:         document.getElementById('ctr_cep').value.trim(),
+    cidade:      document.getElementById('ctr_cidade').value.trim(),
+    email:       document.getElementById('ctr_email').value.trim(),
+  };
+  try {
+    const result = await sheetsRequest({ action: 'saveCliente', data: JSON.stringify(cli) });
+    if (result?.ok) {
+      if (result.id) { cli.id = result.id; _clienteEditandoId = result.id; }
+      // Atualiza catálogo local
+      const idx = catalogoClientes.findIndex(c => c.id === cli.id);
+      if (idx >= 0) catalogoClientes[idx] = cli;
+      else catalogoClientes.push(cli);
+      showToast('Cliente salvo ✓');
+    }
+  } catch(e) { showErro('Erro ao salvar cliente'); }
+}
+async function excluirCliente(id, evt) {
+  evt.stopPropagation();
+  if (!confirm('Remover este cliente do cadastro?')) return;
+  const result = await sheetsRequest({ action: 'deleteCliente', id });
+  if (result?.ok) {
+    catalogoClientes = catalogoClientes.filter(c => c.id !== id);
+    document.getElementById('ctr_lista').style.display = 'none';
+    document.getElementById('ctr_busca').value = '';
+    showToast('Cliente removido ✓');
+  }
+}
+
+async function gerarContrato() {
+  if (!_validarDuracao()) return;
+  const btn = document.getElementById('btnGerarContrato');
+  btn.textContent = '⏳ Gerando...';
+  btn.disabled = true;
+  try {
+    const cliente = {
+      nome:   document.getElementById('ctr_nome').value.trim(),
+      doc:    document.getElementById('ctr_doc').value.trim(),
+      end:         document.getElementById('ctr_end').value.trim(),
+      num:         document.getElementById('ctr_num').value.trim(),
+      complemento: document.getElementById('ctr_complemento').value.trim(),
+      bairro:      document.getElementById('ctr_bairro').value.trim(),
+      cep:         document.getElementById('ctr_cep').value.trim(),
+      cidade:      document.getElementById('ctr_cidade').value.trim(),
+      email:       document.getElementById('ctr_email').value.trim(),
+    };
+    if (!_validarCamposCliente()) return;
+    const orc = coletarDados();
+    await renderContrato(orc, cliente);
+    fecharModalContrato();
+    showToast('Contrato gerado ✓');
+  } catch(e) {
+    console.error(e);
+    alert('Erro ao gerar contrato:\n' + e.message);
+  } finally {
+    btn.textContent = 'Gerar Contrato';
+    btn.disabled = false;
+  }
+}
+
+async function renderContrato(orc, cli) {
+  const DPI = 150;
+  const W   = Math.round(8.27  * DPI);
+  const mm  = DPI / 25.4;
+  const r   = v => Math.round(v * mm);
+
+  const ML = r(20), MR = W - r(20);
+  const TW = MR - ML;
+  const INK = '#1a0a04', DARK = '#3a1a08';
+
+  // Canvas único de altura dinâmica — sem page-break
+  // Primeiro mede altura total com um canvas temporário, depois renderiza de verdade
+  let _measuring = true;
+  let _totalH = r(20); // margem inicial
+
+  function novaPage() {
+    // No modo canvas único, "nova página" não cria novo canvas —
+    // apenas retorna o mesmo contexto (altura será calculada dinamicamente)
+    return null; // sinaliza que não usamos mais múltiplos canvas
+  }
+
+  // Canvas de medição temporário (altura generosa)
+  const cvMeasure = document.createElement('canvas');
+  cvMeasure.width = W; cvMeasure.height = 20000;
+  const cMeasure = cvMeasure.getContext('2d');
+  cMeasure.fillStyle = '#FFFFFF'; cMeasure.fillRect(0, 0, W, 20000);
+
+  // Variáveis de contexto únicas
+  let cv = cvMeasure, c = cMeasure;
+  let H = 20000; // altura temporária para medição
+
+  function wrapText(ctx, text, maxWidth, font) {
+    ctx.font = font;
+    const words = text.split(' ');
+    const lines = []; let line = '';
+    for (const w of words) {
+      const test = line ? line + ' ' + w : w;
+      if (ctx.measureText(test).width > maxWidth && line) { lines.push(line); line = w; }
+      else line = test;
+    }
+    if (line) lines.push(line);
+    return lines;
+  }
+
+  function drawBlock(ctx, text, x, y, maxW, font, lineH, color) {
+    ctx.font = font; ctx.fillStyle = color || '#222'; ctx.textAlign = 'left';
+    const lines = wrapText(ctx, text, maxW, font);
+    for (const ln of lines) { ctx.fillText(ln, x, y); y += lineH; }
+    return y;
+  }
+
+  function hline(ctx, y, x1, x2) {
+    ctx.strokeStyle = '#ccc'; ctx.lineWidth = 0.8;
+    ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x2, y); ctx.stroke();
+  }
+
+  const hoje    = new Date();
+  const dataHoje = hoje.toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' });
+  const dataEv  = fmtDate(orc.dataEvento);
+  const hora    = horarioToDisplay(orc.horario) || '—';
+  const total   = calcTotalOrc(orc);
+  const sinal   = Number(orc.sinalReserva)   || 0;
+  const exc     = Number(orc.valorExcedente) || 0;
+  const hextra  = Number(orc.valorHoraExtra) || 0;
+  const rolha   = Number(orc.custoRolha)     || 0;
+
+  const fB  = `bold ${r(3.8)}px serif`;
+  const fN  = `${r(3.4)}px sans-serif`;
+  const fS  = `${r(3)}px sans-serif`;
+  const fSB = `bold ${r(3)}px sans-serif`;
+  const fT  = `${r(2.8)}px sans-serif`;
+  const lh  = r(5.5), lhS = r(4.8);
+
+  // ── PÁGINA 1 — Identificação + dados do evento ─────────────────────────────
+  // Canvas de medição já inicializado acima como cvMeasure/cMeasure
+  c = cMeasure;
+  let y = r(18);
+
+  // Título
+  c.fillStyle = '#9E2D35'; c.font = `bold ${r(5)}px serif`; c.textAlign = 'center';
+  c.fillText('ACORDO DE PRESTAÇÃO DE SERVIÇOS', W/2, y); y += r(7);
+  c.font = `bold ${r(3.5)}px sans-serif`;
+  c.fillText('PERFEITA SALA', W/2, y); y += r(10);
+  c.strokeStyle = '#9E2D35'; c.lineWidth = 1.5;
+  c.beginPath(); c.moveTo(ML, y); c.lineTo(MR, y); c.stroke(); y += r(8);
+  c.textAlign = 'left';
+
+  // CONTRATADA
+  c.fillStyle = '#9E2D35'; c.font = fSB;
+  c.fillText('CONTRATADA:', ML, y); y += lh;
+  y = drawBlock(c, 'ERVA FINA FESTAS E RECEPÇÕES LTDA. - EPP, sociedade inscrita no CNPJ/MF sob nº 03.765.464/0001-87, com sede na Rua Cônego Eugênio Leite, 443, Pinheiros, CEP 05414-010, São Paulo, SP, telefone (11) 3089 0211.', ML, y, TW, fN, lh);
+  y += r(5);
+
+  // CONTRATANTE
+  hline(c, y, ML, MR); y += r(5);
+  c.fillStyle = '#9E2D35'; c.font = fSB;
+  c.fillText('CONTRATANTE:', ML, y); y += lh;
+  const partes = [
+    cli.nome + (cli.doc ? '  —  CPF/CNPJ: ' + cli.doc : ''),
+    [cli.end, cli.num, cli.complemento, cli.bairro].filter(Boolean).join(', ') + (cli.cep ? '  —  CEP: ' + cli.cep : ''),
+    cli.cidade,
+    cli.email ? 'E-mail: ' + cli.email : '',
+  ].filter(Boolean).join(' | ');
+  y = drawBlock(c, partes, ML, y, TW, fN, lh); y += r(5);
+
+  // Dados bancários
+  hline(c, y, ML, MR); y += r(5);
+  c.fillStyle = '#9E2D35'; c.font = fSB;
+  c.fillText('DADOS BANCÁRIOS PARA DEPÓSITO:', ML, y); y += lh;
+  y = drawBlock(c, 'Santander  —  Ag. 4339  |  C/C 1085599-4  |  Paula de Ribamar e Silva  |  CPF: 811.873.948-15  |  PIX (cel): (11) 99434-6228', ML, y, TW, fN, lh);
+  y += r(5);
+
+  // Dados do evento
+  hline(c, y, ML, MR); y += r(5);
+  c.fillStyle = '#9E2D35'; c.font = fSB;
+  c.fillText('DADOS DO EVENTO:', ML, y); y += lh + r(1);
+
+  const colV = ML + r(65);
+  const dadosEv = [
+    ['Data',                    dataEv],
+    ['Horário',                 hora],
+    ['Duração',                 (orc.duracao ? orc.duracao + 'h' : '—')],
+    ['Tipo de Evento',          orc.tipoEvento || '—'],
+    ['Nº de Convidados',        String(orc.pax || '—')],
+    ['Valor Total',             fmtMoney(total)],
+    sinal   > 0 ? ['Sinal para reserva',        fmtMoney(sinal)]  : null,
+    exc     > 0 ? ['Excedente por convidado',   fmtMoney(exc)]    : null,
+    hextra  > 0 ? ['Hora extra / profissional',  fmtMoney(hextra)] : null,
+    rolha   > 0 ? ['Custo de rolha',             fmtMoney(rolha)]  : null,
+  ].filter(Boolean);
+
+  const opcionais = new Set(['Excedente por convidado', 'Hora extra / profissional', 'Custo de rolha']);
+  let primeiroOpcional = true;
+
+  for (const [lbl, val] of dadosEv) {
+    const isTotal    = lbl === 'Valor Total';
+    const isOpcional = opcionais.has(lbl);
+
+    // Espaço extra antes do primeiro item opcional
+    if (isOpcional && primeiroOpcional) {
+      y += r(3);
+      primeiroOpcional = false;
+    }
+
+    if (isTotal) {
+      // Valor Total: sem fundo, negrito dois pontos maior que fSB
+      const fTotal = `bold ${r(3.7)}px sans-serif`;
+      c.fillStyle = INK; c.font = fTotal; c.textAlign = 'left';
+      c.fillText(lbl + ':', ML, y);
+      c.fillText(val, colV, y);
+      y += lhS + r(1);
+    } else if (isOpcional) {
+      // Opcionais: levemente recuados e em fonte menor
+      c.fillStyle = '#6a4030'; c.font = fT; c.textAlign = 'left';
+      c.fillText(lbl + ':', ML + r(4), y);
+      c.fillStyle = '#444'; c.font = fT;
+      c.fillText(val, colV, y);
+      y += r(4.2);
+    } else {
+      c.fillStyle = DARK; c.font = fSB; c.textAlign = 'left';
+      c.fillText(lbl + ':', ML, y);
+      c.fillStyle = INK; c.font = fN;
+      c.fillText(val, colV, y);
+      y += lhS;
+    }
+  }
+  y += r(2);
+
+  if (orc.incluso) {
+    c.fillStyle = DARK; c.font = fSB; c.fillText('Incluso:', ML, y); y += lhS;
+    y = drawBlock(c, orc.incluso, ML + r(4), y, TW - r(4), fS, lhS); y += r(2);
+  }
+  if (orc.naoIncluso) {
+    c.fillStyle = DARK; c.font = fSB; c.fillText('Não incluso:', ML, y); y += lhS;
+    y = drawBlock(c, orc.naoIncluso, ML + r(4), y, TW - r(4), fS, lhS); y += r(2);
+  }
+
+  // Cardápio
+  const blocos = orc.blocos || [];
+  if (blocos.length > 0) {
+    hline(c, y, ML, MR); y += r(5);
+    c.fillStyle = '#9E2D35'; c.font = fSB; c.textAlign = 'left';
+    c.fillText('CARDÁPIO:', ML, y); y += lh;
+    for (const bloco of blocos) {
+      // sem page-break — canvas único
+      if (bloco.titulo) {
+        c.fillStyle = DARK; c.font = fSB; c.textAlign = 'left';
+        c.fillText(bloco.titulo, ML, y); y += lhS;
+      }
+      for (const item of (bloco.itens || [])) {
+        if (!item.trim()) continue;
+        // sem page-break — canvas único
+        c.fillStyle = '#444'; c.font = fS; c.textAlign = 'left';
+        y = drawBlock(c, '• ' + item, ML + r(4), y, TW - r(4), fS, lhS, '#444');
+      }
+      y += r(2);
+    }
+  }
+
+  // ── Cláusulas + observações (continua no mesmo canvas) ─────────────────────
+  y += r(12); // espaço entre cardápio e cláusulas
+  let c2 = c, y2 = y;
+
+  c2.fillStyle = '#9E2D35'; c2.font = `bold ${r(3.8)}px serif`; c2.textAlign = 'center';
+  // Obs. sinal
+  c2.fillStyle = '#222'; c2.font = `italic ${r(3)}px sans-serif`; c2.textAlign = 'center';
+  c2.fillText('Obs.: Este contrato só terá validade após o depósito correspondente ao sinal.', W/2, y2); y2 += r(7);
+
+  c2.fillStyle = '#9E2D35'; c2.font = `bold ${r(3.8)}px serif`; c2.textAlign = 'center';
+  c2.fillText('ACORDO DE UTILIZAÇÃO DO ESPAÇO PARA EVENTO PARTICULAR', W/2, y2); y2 += r(10);
+  c2.textAlign = 'left';
+
+  const clausulas = [
+    'O FOME DE QUE disponibilizará o local, em caráter exclusivo para a realização do evento, tendo O CLIENTE ciência de que o mesmo não é um salão próprio para eventos e sim onde funciona um restaurante com suas características próprias.',
+    'O CLIENTE se compromete em encerrar o evento no horário determinado neste ACORDO. Em caso de desrespeito, fica o CLIENTE sujeito ao pagamento de custo das horas extras da utilização do local e da mão de obra de garçom e cozinha.',
+    'As Bebidas Alcoólicas que não constam do cardápio e que porventura o CLIENTE deseje oferecer aos seus convidados deverão ser entregues ao coordenador do evento com tempo hábil para que sejam geladas e providenciados copos adequados, caso necessário. Este serviço estará sujeito à cobrança de rolha.',
+    'A conferência do consumo será feita ao final do evento e deverá ser acompanhada por pessoa de confiança do CLIENTE, pois não serão aceitas reclamações posteriores.',
+    'O CLIENTE declara estar ciente de que os profissionais do FOME DE QUE não estão autorizados a servir qualquer tipo de bebida alcoólica a menores de 18 (dezoito) anos, sendo responsabilidade do CLIENTE responder junto aos órgãos competentes por sanções e multas decorrentes de flagrantes de eventual fiscalização.',
+    'O FOME DE QUE se compromete a garantir a excelência dos serviços ora acordados para o Número de Convidados previsto neste Contrato. O cardápio com os alimentos e bebidas fornecidos pelo FOME DE QUE ao CLIENTE serão definidos previamente por ambas as partes e constará deste ACORDO.',
+    'A informação quanto ao Número de Convidados é de total responsabilidade do CLIENTE, ficando o mesmo ciente de que convidados excedentes comprometem o sucesso do evento, acarretando serviço deficiente, falta de material, alimentos e bebidas e serão cobrados posteriormente. Qualquer alteração deverá ser comunicada com pelo menos 2 dias de antecedência e será formalizada por escrito.',
+    'O CLIENTE autoriza, desde já, que seja impedida a entrada de convidados caso este número exceda a capacidade e segurança do local.',
+    'O FOME DE QUE não se responsabiliza pela alimentação de pessoal contratado pelo CLIENTE para o evento (manobristas, seguranças, fotógrafos, músicos, pessoal de som e iluminação, recepcionistas etc.), exceto aqueles autorizados pelo CLIENTE e informados previamente.',
+    'Mau uso ou danos causados ao material utilizado, móveis, decoração e equipamentos do espaço do restaurante, cozinha e banheiros serão cobrados do cliente após o final do evento.',
+    'Não serão fornecidas ao CLIENTE as sobras de alimentos consumidos no evento.',
+  ];
+
+  // Sem page-break — checkarPagina é no-op
+  function checkarPagina(ctx_ref, y_ref) {
+    return { c2: ctx_ref, y2: y_ref };
+  }
+
+  for (let i = 0; i < clausulas.length; i++) {
+    ({ c2, y2 } = checkarPagina(c2, y2));
+    const txt = (i+1) + '. ' + clausulas[i];
+    y2 = drawBlock(c2, txt, ML, y2, TW, fS, lhS, '#222'); y2 += r(3);
+  }
+
+  y2 += r(6);
+  ({ c2, y2 } = checkarPagina(c2, y2));
+
+  // Observações — título
+  c2.fillStyle = INK; c2.font = `bold ${r(3.5)}px sans-serif`; c2.textAlign = 'left';
+  c2.fillText('OBSERVAÇÕES:', ML, y2);
+  const obsW = c2.measureText('OBSERVAÇÕES:').width;
+  c2.strokeStyle = INK; c2.lineWidth = 1;
+  c2.beginPath(); c2.moveTo(ML, y2 + r(1)); c2.lineTo(ML + obsW, y2 + r(1)); c2.stroke();
+  y2 += r(8);
+
+  // Tabela de bebidas
+  const tbH0 = r(8);
+  c2.fillStyle = '#f0f0f0'; c2.fillRect(ML, y2, TW, tbH0);
+  c2.strokeStyle = '#bbb'; c2.lineWidth = 0.8; c2.strokeRect(ML, y2, TW, tbH0);
+  c2.fillStyle = INK; c2.font = `bold ${r(3.2)}px sans-serif`; c2.textAlign = 'center';
+  c2.fillText('Estimativa de consumo de bebidas', W/2, y2 + tbH0 * 0.65);
+  y2 += tbH0;
+
+  const colBev = ML + TW * 0.32;
+  const bebidas = [
+    ['Whisky',               ['1 caixa (6 garrafas) para 100 pessoas']],
+    ['Prosecco / Champagne', ['1 garrafa para cada 4 pessoas (jantares normais)','1 garrafa para cada 3 pessoas (coquetel)','1 garrafa por pessoa (balada)']],
+    ['Vinho Branco',         ['1 garrafa para cada 4 pessoas (jantares normais)']],
+    ['Vinho Tinto',          ['1 garrafa para cada 3 pessoas']],
+    ['Cerveja',              ['1 a 2 latas por pessoa']],
+  ];
+  c2.textAlign = 'left';
+  for (const [bev, descs] of bebidas) {
+    const rowH = r(5.5) * descs.length + r(3);
+    c2.fillStyle = '#fff'; c2.fillRect(ML, y2, TW, rowH);
+    c2.strokeStyle = '#ddd'; c2.lineWidth = 0.5; c2.strokeRect(ML, y2, TW, rowH);
+    c2.fillStyle = INK; c2.font = fSB;
+    c2.fillText(bev, ML + r(2), y2 + r(5));
+    c2.fillStyle = '#333'; c2.font = fT;
+    descs.forEach((dl, di) => c2.fillText(dl, colBev, y2 + r(5) + di * r(5.5)));
+    y2 += rowH;
+  }
+  y2 += r(4);
+  y2 = drawBlock(c2, 'Obs.: Os números acima representam uma estimativa de consumo baseada em estatísticas e em nossa experiência. Porém, tudo depende do perfil dos convidados, da extensão da festa e da variedade de bebidas oferecidas.', ML, y2, TW, `italic ${r(2.8)}px sans-serif`, r(4.5), '#444');
+
+  // ── Assinaturas ─────────────────────────────────────────────────────────────
+  y2 += r(14);
+  ({ c2, y2 } = checkarPagina(c2, y2));
+
+  // Data
+  c2.fillStyle = '#222'; c2.font = fN; c2.textAlign = 'left';
+  c2.fillText('São Paulo, ' + dataHoje, ML, y2);
+
+  // Espaço para assinaturas
+  const assinY = y2 + r(28);
+  const col1X = ML, col1W = TW * 0.42;
+  const col2X = MR - TW * 0.42, col2W = TW * 0.42;
+
+  // "De Acordo:" alinhado com col2
+  c2.fillStyle = '#222'; c2.font = fN; c2.textAlign = 'left';
+  c2.fillText('De Acordo:', col2X, y2 + r(5));
+
+  // Linhas de assinatura na mesma altura
+  c2.strokeStyle = '#333'; c2.lineWidth = 1;
+  c2.beginPath(); c2.moveTo(col1X, assinY); c2.lineTo(col1X + col1W, assinY); c2.stroke();
+  c2.beginPath(); c2.moveTo(col2X, assinY); c2.lineTo(col2X + col2W, assinY); c2.stroke();
+
+  // Imagem de assinatura Erva Fina sobre a linha col1
+  const _assinImg = new Image();
+  _assinImg.src = 'data:image/png;base64,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';
+  await new Promise(res => { _assinImg.onload = res; _assinImg.onerror = res; });
+  const _assinH = r(18);
+  const _assinW = _assinH * (_assinImg.naturalWidth / (_assinImg.naturalHeight || 1));
+  c2.drawImage(_assinImg, col1X, assinY - _assinH, Math.min(_assinW, col1W), _assinH);
+
+  // Labels abaixo das linhas
+  c2.fillStyle = '#222'; c2.font = fSB; c2.textAlign = 'left';
+  c2.fillText('Perfeita Sala', col1X, assinY + r(5));
+  c2.fillStyle = '#555'; c2.font = fT;
+  c2.fillText('Erva Fina Festas e Recepções Ltda.', col1X, assinY + r(9));
+
+  c2.fillStyle = '#222'; c2.font = fSB;
+  c2.fillText(cli.nome, col2X, assinY + r(5));
+  if (cli.doc) { c2.fillStyle = '#555'; c2.font = fT; c2.fillText(cli.doc, col2X, assinY + r(9)); }
+
+  // ── Canvas único: criar canvas final com altura exata ───────────────────────
+  // assinY + r(9) é a última linha desenhada (doc do cliente)
+  const finalH = assinY + r(20); // último elemento + margem inferior
+  const cvFinal = document.createElement('canvas');
+  cvFinal.width = W; cvFinal.height = finalH;
+  const cFinal = cvFinal.getContext('2d');
+  cFinal.fillStyle = '#FFFFFF'; cFinal.fillRect(0, 0, W, finalH);
+  // Copiar conteúdo do canvas de medição para o canvas final
+  cFinal.drawImage(cvMeasure, 0, 0);
+
+  // PDF com página proporcional ao conteúdo (largura A4, altura variável)
+  const ptW = 595.28;
+  const ptH = ptW * (finalH / W); // proporcional
+
+  // buildMinimalPDF com dimensões customizadas
+  const dataUrls = [cvFinal.toDataURL('image/jpeg', 0.92)];
+  const pdfBytes = buildMinimalPDF(dataUrls, W, finalH, ptW, ptH);
+  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+  const link = document.createElement('a');
+  link.href  = URL.createObjectURL(blob);
+  link.download = 'contrato_' + (cli.nome || 'cliente').replace(/[^\w\s]/g,'').trim().replace(/\s+/g,'_') + '.pdf';
+  link.click();
+}
+
+
 // ── Eventos ────────────────────────────────────────────────────────────────
 let evFiltroStatusSet = new Set();
 
 function calcTotalOrc(orc) {
-  const pax    = orc.pax || 0;
-  const buffet = (orc.buffetPP || 0) * pax;
-  const tem    = orc.temDesconto !== false;
-  const locVal = tem ? (orc.locacaoDesc || 0) : (orc.locacaoOrig || 0);
-  const serv   = orc.servico || 0;
-  const imp    = (locVal + buffet + serv) * ((orc.impostosPct || 0) / 100);
+  // Sempre converter para Number — valores podem vir como string do Sheets
+  const pax    = Number(orc.pax)    || 0;
+  const buffet = (Number(orc.buffetPP) || 0) * pax;
+  const tem    = orc.temDesconto === true || String(orc.temDesconto).toUpperCase() === 'TRUE';
+  const locVal = tem ? (Number(orc.locacaoDesc) || 0) : (Number(orc.locacaoOrig) || 0);
+  const serv   = Number(orc.servico)    || 0;
+  const imp    = (locVal + buffet + serv) * ((Number(orc.impostosPct) || 0) / 100);
   return locVal + buffet + serv + imp;
 }
 
@@ -4199,6 +4986,7 @@ function renderCalendario() {
 
 // ── PDF COZINHA ────────────────────────────────────────────────────────────
 async function gerarPDFCozinha() {
+  if (!_validarDuracao()) return;
   salvarOrcamento(true);
   const orc = coletarDados();
   const btn = document.getElementById('btnPdfCozinha');
@@ -4571,6 +5359,98 @@ async function gerarPDFCozinha() {
     <div class="cat-list" id="catTipoList"></div>
     <div class="cat-footer">
       <button class="btn-cancelar-modal" onclick="fecharCatTipo()">cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: cadastro cliente para contrato ───────────────────────────── -->
+<div class="cat-overlay" id="contratoOverlay" onclick="if(event.target===this)fecharModalContrato()">
+  <div class="cat-modal" style="max-width:520px;">
+    <h3>Dados do Cliente</h3>
+    <p class="cat-subtitle">Busque um cliente cadastrado ou preencha os dados abaixo</p>
+
+    <!-- Busca de clientes salvos -->
+    <div style="margin-bottom:12px;">
+      <input id="ctr_busca" class="cli-search" type="text" placeholder="🔍  Buscar cliente cadastrado..."
+             oninput="filtrarClientes(this.value)">
+      <div class="cli-lista" id="ctr_lista" style="display:none;"></div>
+    </div>
+
+    <div class="cat-list" style="gap:10px;">
+      <div>
+        <label style="font-size:10px;color:#9a6050;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:3px;">Nome / Razão Social</label>
+        <input id="ctr_nome" type="text" class="cli-search" oninput="filtrarClientes(this.value); document.getElementById('ctr_busca').value=this.value">
+      </div>
+      <div>
+        <label style="font-size:10px;color:#9a6050;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:3px;">CPF / CNPJ</label>
+        <input id="ctr_doc" type="text" class="cli-search" placeholder="000.000.000-00"
+               oninput="
+                 let v=this.value.replace(/\D/g,'');
+                 if(v.length<=11){
+                   v=v.replace(/(\d{3})(\d)/,'$1.$2')
+                     .replace(/(\d{3}\.\d{3})(\d)/,'$1.$2')
+                     .replace(/(\d{3}\.\d{3}\.\d{3})(\d)/,'$1-$2')
+                     .slice(0,14);
+                 } else {
+                   v=v.replace(/(\d{2})(\d)/,'$1.$2')
+                     .replace(/(\d{2}\.\d{3})(\d)/,'$1.$2')
+                     .replace(/(\d{2}\.\d{3}\.\d{3})(\d)/,'$1/$2')
+                     .replace(/(\d{2}\.\d{3}\.\d{3}\/\d{4})(\d)/,'$1-$2')
+                     .slice(0,18);
+                 }
+                 this.value=v;">
+      </div>
+      <!-- CEP com busca automática -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div>
+          <label style="font-size:10px;color:#9a6050;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:3px;">CEP</label>
+          <input id="ctr_cep" type="text" class="cli-search" placeholder="00000-000"
+                 oninput="this.value=this.value.replace(/\D/g,'').replace(/(\d{5})(\d)/,'$1-$2').slice(0,9)"
+                 onblur="buscarCep(this.value)">
+        </div>
+        <div style="display:flex;align-items:flex-end;">
+          <span id="ctr_cep_status" style="font-size:10px;color:#9a6050;padding-bottom:10px;"></span>
+        </div>
+      </div>
+      <!-- Logradouro preenchido pelo CEP -->
+      <div>
+        <label style="font-size:10px;color:#9a6050;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:3px;">Logradouro</label>
+        <input id="ctr_end" type="text" class="cli-search" placeholder="Preenchido pelo CEP">
+      </div>
+      <!-- Número e Complemento lado a lado -->
+      <div style="display:grid;grid-template-columns:120px 1fr;gap:8px;">
+        <div>
+          <label style="font-size:10px;color:#9a6050;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:3px;">Número</label>
+          <input id="ctr_num" type="text" class="cli-search" placeholder="Nº">
+        </div>
+        <div>
+          <label style="font-size:10px;color:#9a6050;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:3px;">Complemento</label>
+          <input id="ctr_complemento" type="text" class="cli-search" placeholder="Apto, sala...">
+        </div>
+      </div>
+      <div>
+        <label style="font-size:10px;color:#9a6050;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:3px;">Bairro</label>
+        <input id="ctr_bairro" type="text" class="cli-search">
+      </div>
+      <div>
+        <label style="font-size:10px;color:#9a6050;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:3px;">Cidade</label>
+        <input id="ctr_cidade" type="text" class="cli-search" value="São Paulo - SP">
+      </div>
+      <div>
+        <label style="font-size:10px;color:#9a6050;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:3px;">E-mail</label>
+        <input id="ctr_email" type="email" class="cli-search">
+      </div>
+    </div>
+    <div class="cat-footer" style="margin-top:20px;">
+      <button class="btn-cancelar-modal" onclick="fecharModalContrato()">cancelar</button>
+      <button class="btn-save" onclick="salvarClienteModal()" title="Salvar cliente na planilha" style="margin-right:auto;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+        Salvar cliente
+      </button>
+      <button class="btn-save" id="btnGerarContrato" onclick="gerarContrato()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Gerar Contrato
+      </button>
     </div>
   </div>
 </div>
