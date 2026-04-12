@@ -472,6 +472,116 @@ body {
 .btn-cal.active { background: #3a1a0a; border-color: var(--coral); color: var(--cream); }
 
 /* ── Calendar Modal ── */
+
+/* ── Modal Cadastros ── */
+.cad-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 4000;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 24px 16px;
+  overflow-y: auto;
+}
+.cad-overlay.open { display: flex; }
+.cad-modal {
+  background: #1a0905;
+  border: 1px solid #3a1f14;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 980px;
+  max-height: calc(100vh - 48px);
+  padding: 28px;
+  position: relative;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.7);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.cad-close {
+  position: absolute;
+  top: 16px; right: 20px;
+  background: none; border: none;
+  color: #c0806a; font-size: 26px;
+  cursor: pointer; line-height: 1;
+}
+.cad-close:hover { color: var(--coral); }
+.cad-title {
+  font-family: 'Lora', serif;
+  font-size: 20px;
+  color: var(--cream);
+  margin-bottom: 16px;
+}
+.cad-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 14px;
+}
+.cad-table-wrap { overflow-x: auto; overflow-y: auto; flex: 1; min-height: 0; }
+.cad-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+}
+.cad-table th {
+  text-align: left;
+  padding: 8px 10px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: #c0906a;
+  border-bottom: 1px solid #3a1f14;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  background: #1a0905;
+  z-index: 1;
+}
+.cad-table td {
+  padding: 9px 10px;
+  border-bottom: 1px solid #1e0e07;
+  color: var(--cream);
+  vertical-align: middle;
+}
+.cad-table tr:last-child td { border-bottom: none; }
+.cad-table tr:hover td { background: #2a1208; }
+.cad-actions { display: flex; gap: 6px; white-space: nowrap; }
+.cad-btn-edit, .cad-btn-del {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid;
+  transition: all 0.15s;
+}
+.cad-btn-edit { background: transparent; border-color: #5a9a5a; color: #5a9a5a; }
+.cad-btn-edit:hover { background: #5a9a5a; color: #fff; }
+.cad-btn-del  { background: transparent; border-color: #c0392b; color: #c0392b; }
+.cad-btn-del:hover  { background: #c0392b; color: #fff; }
+.cad-empty {
+  text-align: center; color: #5a3a28;
+  padding: 40px; font-size: 13px;
+}
+.cad-btn-fechar {
+  display: block;
+  margin: 20px auto 0;
+  padding: 10px 36px;
+  background: #2a1208;
+  border: 1.5px solid #5a3020;
+  border-radius: 8px;
+  color: #e0a080;
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s;
+}
+.cad-btn-fechar:hover { border-color: var(--coral); color: var(--coral); }
+
 .ev-overlay {
   display: none;
   position: fixed;
@@ -1735,6 +1845,22 @@ body {
           <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
         </svg>
         Eventos
+      </button>
+      <button class="btn-cal" id="btnCadastros" onclick="abrirCadastros()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        Cadastros
+      </button>
+      <button class="btn-cal" id="btnCadastros" onclick="abrirCadastros()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        Cadastros
       </button>
       <button class="btn-cal" id="btnGraficos" onclick="abrirGraficos()">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -3998,9 +4124,15 @@ async function buscarCep(cep) {
 
 function fecharModalContrato() {
   document.getElementById('contratoOverlay').classList.remove('open');
+  document.getElementById('btnGerarContrato').style.display = ''; // restaurar visibilidade
+  if (_cadModoAtivo) {
+    _cadModoAtivo = false;
+    document.getElementById('cadOverlay').classList.add('open');
+    renderTabelaCadastros();
+  }
 }
 function limparFormCliente() {
-  ['ctr_nome','ctr_doc','ctr_end','ctr_num','ctr_complemento','ctr_bairro','ctr_cep','ctr_email'].forEach(id => {
+  ['ctr_nome','ctr_doc','ctr_tel','ctr_end','ctr_num','ctr_complemento','ctr_bairro','ctr_cep','ctr_email'].forEach(id => {
     document.getElementById(id).value = '';
   });
   document.getElementById('ctr_cidade').value = 'São Paulo - SP';
@@ -4009,6 +4141,7 @@ function limparFormCliente() {
 function preencherFormCliente(cli) {
   document.getElementById('ctr_nome').value   = cli.nome   || '';
   document.getElementById('ctr_doc').value    = cli.doc    || '';
+  document.getElementById('ctr_tel').value         = cli.tel         || '';
   document.getElementById('ctr_end').value         = cli.end         || '';
   document.getElementById('ctr_num').value         = cli.num         || '';
   document.getElementById('ctr_complemento').value = cli.complemento || '';
@@ -4048,6 +4181,7 @@ function _validarCamposCliente() {
     { id: 'ctr_bairro', msg: 'Informe o bairro'          },
     { id: 'ctr_cidade', msg: 'Informe a cidade'          },
     { id: 'ctr_email',  msg: 'Informe o e-mail'          },
+    { id: 'ctr_tel',    msg: 'Informe o telefone'         },
     // ctr_complemento é opcional — não incluído
   ];
   for (const c of campos) {
@@ -4070,10 +4204,14 @@ function _validarCamposCliente() {
 
 async function salvarClienteModal() {
   if (!_validarCamposCliente()) return;
+  // Proteção contra duplo clique
+  const btnSalvar = document.querySelector('[onclick="salvarClienteModal()"]');
+  if (btnSalvar) { btnSalvar.disabled = true; btnSalvar.textContent = 'Salvando...'; }
   const cli = {
     id:          _clienteEditandoId || '',
     nome:        document.getElementById('ctr_nome').value.trim(),
     doc:         document.getElementById('ctr_doc').value.trim(),
+    tel:         document.getElementById('ctr_tel').value.trim(),
     end:         document.getElementById('ctr_end').value.trim(),
     num:         document.getElementById('ctr_num').value.trim(),
     complemento: document.getElementById('ctr_complemento').value.trim(),
@@ -4090,14 +4228,27 @@ async function salvarClienteModal() {
       const idx = catalogoClientes.findIndex(c => c.id === cli.id);
       if (idx >= 0) catalogoClientes[idx] = cli;
       else catalogoClientes.push(cli);
-      // Vincular cliente ao orçamento atual
-      if (currentId) {
+      // Vincular cliente ao orçamento atual e sincronizar o nome
+      if (currentId && !_cadModoAtivo) {
         currentClienteId = cli.id;
-        salvarOrcamento(true); // persiste o vínculo
+        // Sincronizar o campo "cliente" do orçamento com o nome do cadastro
+        const campoCliente = document.getElementById('cliente');
+        if (campoCliente) campoCliente.value = cli.nome;
+        salvarOrcamento(true); // persiste o vínculo e o nome atualizado
       }
       showToast('Cliente salvo ✓');
+      if (_cadModoAtivo) { fecharModalContrato(); }
     }
-  } catch(e) { showErro('Erro ao salvar cliente'); }
+  } catch(e) {
+    showErro('Erro ao salvar cliente');
+  } finally {
+    // Restaurar botão
+    const btnS = document.querySelector('[onclick="salvarClienteModal()"]');
+    if (btnS) {
+      btnS.disabled = false;
+      btnS.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg> Salvar cliente';
+    }
+  }
 }
 async function excluirCliente(id, evt) {
   evt.stopPropagation();
@@ -4110,6 +4261,106 @@ async function excluirCliente(id, evt) {
     showToast('Cliente removido ✓');
   }
 }
+
+
+// ── Cadastros ─────────────────────────────────────────────────────────────────
+async function abrirCadastros() {
+  document.getElementById('cadOverlay').classList.add('open');
+  setSidebarBtnActive('btnCadastros');
+
+  // Mostrar loading
+  const tbody = document.getElementById('cadTableBody');
+  const empty = document.getElementById('cadEmpty');
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#7a5040;padding:24px">Carregando...</td></tr>';
+  empty.style.display = 'none';
+
+  // Sempre buscar clientes frescos do Sheets
+  try {
+    const cfg = getCfg();
+    if (cfg.url) {
+      const token = await window._fbAuth?.currentUser?.getIdToken(false);
+      if (token) {
+        const res = await fetch(cfg.url + '?' + new URLSearchParams({ action: 'listClientes', token })).then(r => r.json());
+        if (res?.clientes) catalogoClientes = res.clientes;
+      }
+    }
+  } catch(e) {
+    console.warn('Erro ao carregar clientes:', e);
+  }
+
+  renderTabelaCadastros();
+}
+function fecharCadastros() {
+  document.getElementById('cadOverlay').classList.remove('open');
+  setSidebarBtnActive(null);
+}
+function renderTabelaCadastros(filtro) {
+  const tbody = document.getElementById('cadTableBody');
+  const empty = document.getElementById('cadEmpty');
+  const q = (filtro || document.getElementById('cadBusca')?.value || '').toLowerCase();
+  let lista = catalogoClientes;
+  if (q) lista = lista.filter(c =>
+    (c.nome||'').toLowerCase().includes(q) ||
+    (c.doc||'').toLowerCase().includes(q)  ||
+    (c.email||'').toLowerCase().includes(q)||
+    (c.tel||'').toLowerCase().includes(q)
+  );
+  if (!lista.length) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  tbody.innerHTML = lista.map(c => `
+    <tr>
+      <td>${escHtml(c.nome||'')}</td>
+      <td>${escHtml(c.doc||'')}</td>
+      <td>${escHtml(c.tel||'')}</td>
+      <td>${escHtml(c.email||'')}</td>
+      <td>${escHtml([c.end, c.num, c.complemento].filter(Boolean).join(', ') || '')}</td>
+      <td>${escHtml(c.cidade||'')}</td>
+      <td>
+        <div class="cad-actions">
+          <button class="cad-btn-edit" onclick="editarCadastro('${c.id}')">Editar</button>
+          <button class="cad-btn-del"  onclick="apagarCadastro('${c.id}')">Apagar</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+function novoCadastro() {
+  // Abre o modal de contrato reutilizando o form de cliente, sem orçamento vinculado
+  _clienteEditandoId = null;
+  limparFormCliente();
+  // Ajustar footer — esconder botão "Gerar Contrato", mostrar só "Salvar cliente"
+  document.getElementById('btnGerarContrato').style.display = 'none';
+  document.getElementById('cadOverlay').classList.remove('open');
+  document.getElementById('contratoOverlay').classList.add('open');
+  // Ao fechar, reabrir cadastros
+  _cadModoAtivo = true;
+}
+function editarCadastro(id) {
+  const cli = catalogoClientes.find(c => c.id === id);
+  if (!cli) return;
+  _clienteEditandoId = id;
+  preencherFormCliente(cli);
+  document.getElementById('btnGerarContrato').style.display = 'none';
+  document.getElementById('cadOverlay').classList.remove('open');
+  document.getElementById('contratoOverlay').classList.add('open');
+  _cadModoAtivo = true;
+}
+async function apagarCadastro(id) {
+  const cli = catalogoClientes.find(c => c.id === id);
+  if (!confirm('Remover o cadastro de ' + (cli?.nome || 'este cliente') + '?')) return;
+  const result = await sheetsRequest({ action: 'deleteCliente', id });
+  if (result?.ok) {
+    catalogoClientes = catalogoClientes.filter(c => c.id !== id);
+    renderTabelaCadastros();
+    showToast('Cadastro removido ✓');
+  } else {
+    showErro('Erro ao remover cadastro');
+  }
+}
+let _cadModoAtivo = false; // indica que o form de cliente foi aberto pelo módulo Cadastros
 
 async function gerarContrato() {
   if (!_validarDuracao()) return;
@@ -4381,44 +4632,6 @@ async function renderContrato(orc, cli) {
 
   y2 += r(6);
   ({ c2, y2 } = checkarPagina(c2, y2));
-
-  // Observações — título
-  c2.fillStyle = INK; c2.font = `bold ${r(3.5)}px sans-serif`; c2.textAlign = 'left';
-  c2.fillText('OBSERVAÇÕES:', ML, y2);
-  const obsW = c2.measureText('OBSERVAÇÕES:').width;
-  c2.strokeStyle = INK; c2.lineWidth = 1;
-  c2.beginPath(); c2.moveTo(ML, y2 + r(1)); c2.lineTo(ML + obsW, y2 + r(1)); c2.stroke();
-  y2 += r(8);
-
-  // Tabela de bebidas
-  const tbH0 = r(8);
-  c2.fillStyle = '#f0f0f0'; c2.fillRect(ML, y2, TW, tbH0);
-  c2.strokeStyle = '#bbb'; c2.lineWidth = 0.8; c2.strokeRect(ML, y2, TW, tbH0);
-  c2.fillStyle = INK; c2.font = `bold ${r(3.2)}px sans-serif`; c2.textAlign = 'center';
-  c2.fillText('Estimativa de consumo de bebidas', W/2, y2 + tbH0 * 0.65);
-  y2 += tbH0;
-
-  const colBev = ML + TW * 0.32;
-  const bebidas = [
-    ['Whisky',               ['1 caixa (6 garrafas) para 100 pessoas']],
-    ['Prosecco / Champagne', ['1 garrafa para cada 4 pessoas (jantares normais)','1 garrafa para cada 3 pessoas (coquetel)','1 garrafa por pessoa (balada)']],
-    ['Vinho Branco',         ['1 garrafa para cada 4 pessoas (jantares normais)']],
-    ['Vinho Tinto',          ['1 garrafa para cada 3 pessoas']],
-    ['Cerveja',              ['1 a 2 latas por pessoa']],
-  ];
-  c2.textAlign = 'left';
-  for (const [bev, descs] of bebidas) {
-    const rowH = r(5.5) * descs.length + r(3);
-    c2.fillStyle = '#fff'; c2.fillRect(ML, y2, TW, rowH);
-    c2.strokeStyle = '#ddd'; c2.lineWidth = 0.5; c2.strokeRect(ML, y2, TW, rowH);
-    c2.fillStyle = INK; c2.font = fSB;
-    c2.fillText(bev, ML + r(2), y2 + r(5));
-    c2.fillStyle = '#333'; c2.font = fT;
-    descs.forEach((dl, di) => c2.fillText(dl, colBev, y2 + r(5) + di * r(5.5)));
-    y2 += rowH;
-  }
-  y2 += r(4);
-  y2 = drawBlock(c2, 'Obs.: Os números acima representam uma estimativa de consumo baseada em estatísticas e em nossa experiência. Porém, tudo depende do perfil dos convidados, da extensão da festa e da variedade de bebidas oferecidas.', ML, y2, TW, `italic ${r(2.8)}px sans-serif`, r(4.5), '#444');
 
   // ── Assinaturas ─────────────────────────────────────────────────────────────
   y2 += r(14);
@@ -5457,6 +5670,44 @@ async function gerarPDFCozinha() {
   </div>
 </div>
 
+
+<!-- ── Modal: Cadastros ────────────────────────────────────────────────── -->
+<div class="cad-overlay" id="cadOverlay" onclick="if(event.target===this)fecharCadastros()">
+  <div class="cad-modal">
+    <button class="cad-close" onclick="fecharCadastros()">×</button>
+    <div class="cad-title">Cadastro de Clientes</div>
+
+    <div class="cad-toolbar">
+      <input type="text" id="cadBusca" class="cli-search" placeholder="🔍  Buscar por nome, CPF, e-mail..."
+             oninput="renderTabelaCadastros(this.value)"
+             style="flex:1;max-width:320px;margin-right:12px;">
+      <button class="btn-save" onclick="novoCadastro()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Novo Cliente
+      </button>
+    </div>
+
+    <div class="cad-table-wrap">
+      <table class="cad-table">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>CPF / CNPJ</th>
+            <th>Telefone</th>
+            <th>E-mail</th>
+            <th>Endereço</th>
+            <th>Cidade</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="cadTableBody"></tbody>
+      </table>
+    </div>
+    <div id="cadEmpty" class="cad-empty" style="display:none">Nenhum cliente encontrado.</div>
+    <button class="cad-btn-fechar" onclick="fecharCadastros()">Fechar</button>
+  </div>
+</div>
+
 <!-- ── Modal: cadastro cliente para contrato ───────────────────────────── -->
 <div class="cat-overlay" id="contratoOverlay" onclick="if(event.target===this)fecharModalContrato()">
   <div class="cat-modal" style="max-width:520px;">
@@ -5533,6 +5784,14 @@ async function gerarPDFCozinha() {
       <div>
         <label style="font-size:10px;color:#9a6050;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:3px;">E-mail</label>
         <input id="ctr_email" type="email" class="cli-search">
+      </div>
+      <div>
+        <label style="font-size:10px;color:#9a6050;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:3px;">Telefone</label>
+        <input id="ctr_tel" type="text" class="cli-search" placeholder="(11) 99999-9999"
+               oninput="let v=this.value.replace(/\D/g,'').slice(0,11);
+                 if(v.length>10) v=v.replace(/(\d{2})(\d{5})(\d{4})/,'($1) $2-$3');
+                 else if(v.length>5) v=v.replace(/(\d{2})(\d{4,5})(\d{0,4})/,'($1) $2' + (v.length>6?'-$3':''));
+                 this.value=v;">
       </div>
     </div>
     <div class="cat-footer" style="margin-top:20px;">
