@@ -4502,7 +4502,7 @@ async function renderContrato(orc, cli) {
   hline(c, y, ML, MR); y += r(5);
   c.fillStyle = '#9E2D35'; c.font = fSB;
   c.fillText('DADOS BANCÁRIOS PARA DEPÓSITO:', ML, y); y += lh;
-  y = drawBlock(c, 'Santander  —  Ag. 4339  |  C/C 1085599-4  |  Paula de Ribamar e Silva  |  CPF: 811.873.948-15  |  PIX (cel): (11) 99434-6228', ML, y, TW, fN, lh);
+  y = drawBlock(c, 'Itaú  —  Ag. 0845  |  C/C 991152-0  |  Erva Fina Festas e Recepções Ltda  |  PIX: financeiro@aninhagonzalez.com.br', ML, y, TW, fN, lh);
   y += r(5);
 
   // Dados do evento
@@ -5378,15 +5378,28 @@ async function gerarPDFCozinha() {
     ];
     const cols = 4;
     const fw   = (W - r(20)) / cols;
+    const colPad = r(3); // margem direita entre colunas
+
+    // Truncar texto com reticências se ultrapassar a largura da coluna
+    function truncateText(ctx, text, maxW) {
+      if (ctx.measureText(text).width <= maxW) return text;
+      let t = text;
+      while (t.length > 0 && ctx.measureText(t + '…').width > maxW) {
+        t = t.slice(0, -1);
+      }
+      return t + '…';
+    }
+
     fields.forEach(([lbl, val], i) => {
-      const fx = r(10) + i * fw;
+      const fx    = r(10) + i * fw;
+      const maxW  = fw - colPad;
       ctx.font      = `bold ${r(2.4)}px sans-serif`;
       ctx.fillStyle = '#666666';
       ctx.textAlign = 'left';
-      ctx.fillText(lbl.toUpperCase(), fx, cy + r(3));
+      ctx.fillText(truncateText(ctx, lbl.toUpperCase(), maxW), fx, cy + r(3));
       ctx.font      = `bold ${r(4)}px sans-serif`;
       ctx.fillStyle = '#000000';
-      ctx.fillText(val, fx, cy + r(9));
+      ctx.fillText(truncateText(ctx, val, maxW), fx, cy + r(9));
     });
     cy += r(16);
 
